@@ -3,7 +3,7 @@
 //  TCP-audio-OSX
 //
 //  Created by William Dillon on 11/3/11.
-//  Copyright (c) 2011 Oregon State University (COAS). All rights reserved.
+//  Copyright (c) 2011. All rights reserved.
 //
 
 
@@ -17,14 +17,21 @@
 @class ViewController;
 @class AudioSource;
 
+void handleInputBuffer(void *aqData,
+                       AudioQueueRef audioQueue,
+                       AudioQueueBufferRef inBuffer,
+                       const AudioTimeStamp *inStartTime,
+                       UInt32 inNumPackets,
+                       const AudioStreamPacketDescription *packetDesc);
+
 struct AQRecorderState {	
-    AudioStreamBasicDescription  mDataFormat;
-    AudioQueueRef                mQueue;
-    AudioQueueBufferRef         *mBuffers;
-    UInt32                       bufferByteSize;
-    SInt64                       mCurrentPacket;
-	NetworkSession				*session;
-	AudioSource					*audioSource;
+    AudioStreamBasicDescription          mDataFormat;
+    AudioQueueRef                        mQueue;
+    AudioQueueBufferRef                 *mBuffers;
+    UInt32                               bufferByteSize;
+    SInt64                               mCurrentPacket;
+	__unsafe_unretained NetworkSession  *session;
+	__unsafe_unretained AudioSource     *audioSource;
 };
 
 @interface AudioSource : NSObject {
