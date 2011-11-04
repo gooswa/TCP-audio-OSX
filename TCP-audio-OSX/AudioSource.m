@@ -3,7 +3,7 @@
 //  TCP-audio-OSX
 //
 //  Created by William Dillon on 11/3/11.
-//  Copyright (c) 2011 Oregon State University (COAS). All rights reserved.
+//  Copyright (c) 2011. All rights reserved.
 //
 
 
@@ -32,7 +32,6 @@ void handleInputBuffer(void *aqData,
 	if( inNumPackets == 0 && recorderState->mDataFormat.mBytesPerPacket != 0 )
 		inNumPackets = inBuffer->mAudioDataByteSize / recorderState->mDataFormat.mBytesPerPacket;
 	
-    
 	if( [recorderState->audioSource running] ) {
 		
         //		NSLog(@"Sending %d bytes of data", inBuffer->mAudioDataByteSize);
@@ -106,7 +105,7 @@ void handleInputBuffer(void *aqData,
 							  &device_UID, &dataFormatSize);
 	}
     
-	NSString *deviceString = (NSString *)device_UID;
+	NSString *deviceString = (__bridge_transfer NSString *)device_UID;
 	NSLog(@"Using audio device UID: %@\n", deviceString);
 	NSLog(@"Got channel count %d from driver.\n", recorderState.mDataFormat.mChannelsPerFrame);
 	
