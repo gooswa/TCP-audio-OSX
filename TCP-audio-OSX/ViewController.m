@@ -36,7 +36,7 @@
     
     // Disconnect network and release
 	[networkSession disconnect];
-	[NetworkSession release];
+    [networkSession release];
 	networkSession = nil;
     
     // Ensure that checkbox is correct
@@ -82,6 +82,7 @@
 	NSLog(@"Controller accepted new session.");
 	
 	networkSession = newSession;
+    [networkSession retain];
 	[networkSession setDelegate:self];
 	
 	// Set UI attributes
