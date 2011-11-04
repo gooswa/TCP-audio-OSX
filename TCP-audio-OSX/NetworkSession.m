@@ -3,12 +3,10 @@
 //  TCP-audio-OSX
 //
 //  Created by William Dillon on 11/3/11.
-//  Copyright (c) 2011 Oregon State University (COAS). All rights reserved.
+//  Copyright (c) 2011. All rights reserved.
 //
 
 #import "NetworkSession.h"
-
-int ignoreSigPipe();
 
 @implementation NetworkSession
 
@@ -44,7 +42,6 @@ int ignoreSigPipe();
 	
 error:
 	perror("Creating socket for Network Session");
-	[self release];
 	self = nil;
 	return self;
 }
@@ -67,7 +64,6 @@ error:
 	
 error:
 	perror("Creating socket for Network Session");
-	[self release];
 	self = nil;
 	return self;	
 }
@@ -157,7 +153,7 @@ error:
 	}
 	
 	ssize_t retval;
-    retval = send( fileDescriptor, data, length,  );
+    retval = send( fileDescriptor, data, length, 0 );
     if( retval < 0 ) {
 		perror("Writing data");
 		if( errno == EPIPE ) {
@@ -173,7 +169,7 @@ error:
 	if( !connected ) {
 		if( ![self connect] ) {
 			perror("Unable to receive, not connected and unable to connect");
-			return NO;
+			return nil;
 		}
 	}	
 	
@@ -192,20 +188,12 @@ error:
 
 - (NSString *)hostname
 {
-	NSString *retval = [hostname copy];
-	[retval release];
-	
-	return retval;
+	return [hostname copy];
 }
 
 - (void)setHostname:(NSString *)newHostname
 {
-	if( hostname != nil ) {
-		[hostname release];
-	}
-	
 	hostname = newHostname;
-	[hostname retain];
 }
 
 - (void)setDelegate:(id)del
@@ -214,12 +202,3 @@ error:
 }
 
 @end
-
-int ignoreSigPipe()
-{
-	sigset_t newSigSet;
-	
-	sigemptyset( &newSigSet );
-	sigaddset( &newSigSet, SIGPIPE );
-	return sigprocmask( SIG_BLOCK, &newSigSet, NULL );
-}
