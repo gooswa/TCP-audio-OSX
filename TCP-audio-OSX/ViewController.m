@@ -3,7 +3,7 @@
 //  TCP-audio-OSX
 //
 //  Created by William Dillon on 11/3/11.
-//  Copyright (c) 2011 Oregon State University (COAS). All rights reserved.
+//  Copyright (c) 2011. All rights reserved.
 //
 
 #import "ViewController.h"
@@ -82,7 +82,6 @@
 	NSLog(@"Controller accepted new session.");
 	
 	networkSession = newSession;
-	[networkSession retain];
 	[networkSession setDelegate:self];
 	
 	// Set UI attributes
