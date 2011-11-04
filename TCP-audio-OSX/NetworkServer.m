@@ -3,7 +3,7 @@
 //  TCP-audio-OSX
 //
 //  Created by William Dillon on 11/3/11.
-//  Copyright (c) 2011 Oregon State University (COAS). All rights reserved.
+//  Copyright (c) 2011. All rights reserved.
 //
 
 #import "NetworkServer.h"
@@ -96,25 +96,22 @@ ignoreSigpipe()
 
 - (void)acceptLoop
 {
-	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-    
 	NetworkSession *networkSession = nil;
-    
+
 	// Listen for an incoming connection indefinitely 
 	while( true ) {
-		
-		networkSession = [self accept];
-		
-		if( networkSession != nil ) {
-			[delegate newNetworkSession: networkSession];			
-		} else {
-			NSLog(@"Error listening, retrying.");
-		}
-		
-		[networkSession release];
+        @autoreleasepool {
+            networkSession = [self accept];
+            
+            if( networkSession != nil ) {
+                [delegate newNetworkSession: networkSession];			
+            } else {
+                NSLog(@"Error listening, retrying.");
+            }
+            
+            networkSession = nil;
+        }
 	}
-    
-	[pool release];
 }
 
 - (void)acceptInBackground
@@ -147,14 +144,13 @@ ignoreSigpipe()
 		
 		struct hostent *hostptr = gethostbyaddr((char*)&(net_client.sin_addr.s_addr), len, AF_INET);
 		if( hostptr != nil ) {
-			hostnameString = [[NSString alloc] initWithCString:(*hostptr).h_name];
+			hostnameString = [[NSString alloc] initWithCString:(*hostptr).h_name encoding:NSUTF8StringEncoding];
 		} else {
 			hostnameString = [[NSString alloc] initWithString:@"Unknown Client."];
 		}
 		NSLog(@"New connection successful, to %@ (fd: %d).", hostnameString, fileDescriptor);
 		
 		[networkSession setHostname: hostnameString];
-		[hostnameString release];
 		
 	} else {
 		NSLog(@"Connection attempt failed.");
