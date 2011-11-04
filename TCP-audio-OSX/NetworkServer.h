@@ -3,11 +3,16 @@
 //  TCP-audio-OSX
 //
 //  Created by William Dillon on 11/3/11.
-//  Copyright (c) 2011 Oregon State University (COAS). All rights reserved.
+//  Copyright (c) 2011. All rights reserved.
 //
 
 #import <Cocoa/Cocoa.h>
 #import "NetworkSession.h"
+
+// Convenience function used to disable the generation of a pipe signal
+// when a pipe breaks.  Expect to get an EPIPE return from send/receive
+// in this case.
+int ignoreSigPipe();
 
 @class ViewController;
 
