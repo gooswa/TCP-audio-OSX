@@ -14,10 +14,7 @@
 {
 	self = [super init];
 	
-	if( self != nil ) {
-		if( ignoreSigPipe() != 0 )
-			goto error;
-		
+	if( self != nil ) {		
 		hp = gethostbyname( [hostName UTF8String] );
 		if( hp == nil ) {
 			perror( "Looking up host address" );
@@ -53,11 +50,8 @@ error:
 	if( self != nil ) {		
 		written = read =  0;
 		sock = socket;
-        //		fileDescriptor = socket;
 		fileDescriptor = fd;
 		connected = true;
-	} else {
-		fileDescriptor = -1;
 	}
 	
 	return self;
@@ -188,7 +182,10 @@ error:
 
 - (NSString *)hostname
 {
-	return [hostname copy];
+	NSString *retval = [hostname copy];
+    [retval autorelease];
+    
+    return retval;
 }
 
 - (void)setHostname:(NSString *)newHostname
