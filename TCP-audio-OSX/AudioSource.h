@@ -14,7 +14,7 @@
 #import <CoreAudio/AudioHardware.h>
 #import "NetworkSession.h"
 
-@class ViewController;
+@class AppDelegate;
 @class AudioSource;
 
 void handleInputBuffer(void *aqData,
@@ -25,13 +25,13 @@ void handleInputBuffer(void *aqData,
                        const AudioStreamPacketDescription *packetDesc);
 
 struct AQRecorderState {	
-    AudioStreamBasicDescription          mDataFormat;
-    AudioQueueRef                        mQueue;
-    AudioQueueBufferRef                 *mBuffers;
-    UInt32                               bufferByteSize;
-    SInt64                               mCurrentPacket;
-	__unsafe_unretained NetworkSession  *session;
-	__unsafe_unretained AudioSource     *audioSource;
+    AudioStreamBasicDescription  mDataFormat;
+    AudioQueueRef                mQueue;
+    AudioQueueBufferRef         *mBuffers;
+    UInt32                       bufferByteSize;
+    SInt64                       mCurrentPacket;
+    AppDelegate                 *delegate;
+    AudioSource                 *audioSource;
 };
 
 @interface AudioSource : NSObject {
@@ -46,8 +46,10 @@ struct AQRecorderState {
 	
 	// Core Audio device
 	AudioDeviceID				 device;
-	UInt32						 deviceBufferSize;  // Size of the audio buffer for device
-	AudioStreamBasicDescription	 deviceFormat;      // info about the default device
+    // Size of the audio buffer for device
+	UInt32						 deviceBufferSize;
+    // info about the default device
+	AudioStreamBasicDescription	 deviceFormat;
 };
 
 @property(readonly) bool running;
