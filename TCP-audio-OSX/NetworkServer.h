@@ -9,13 +9,6 @@
 #import <Cocoa/Cocoa.h>
 #import "NetworkSession.h"
 
-// Convenience function used to disable the generation of a pipe signal
-// when a pipe breaks.  Expect to get an EPIPE return from send/receive
-// in this case.
-int ignoreSigPipe();
-
-@class ViewController;
-
 @interface NetworkServer : NSObject {
     
 	bool init;

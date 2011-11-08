@@ -7,7 +7,7 @@
 //
 
 #import "NetworkServer.h"
-#import "ViewController.h"
+#import "AppDelegate.h"
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -16,16 +16,6 @@
 #include <netdb.h>
 #include <signal.h>
 #include <stdio.h>
-
-int
-ignoreSigpipe()
-{
-	sigset_t newSigSet;
-	
-	sigemptyset(&newSigSet);
-	sigaddset(&newSigSet, SIGPIPE);
-	return sigprocmask(SIG_BLOCK, &newSigSet, NULL);
-}
 
 @implementation NetworkServer
 
@@ -40,19 +30,12 @@ ignoreSigpipe()
 		NSLog(@"Initializing NetworkServer.\n");
 		
 		init	= true;
-		error	= true;
+        error   = false;
 		started = false;
-        
-		if(ignoreSigpipe() != 0) {
-			NSLog(@"Error changing signal mask (SIGPIPE).");
-			return self;
-		}
         
 	} else {
 		NSLog(@"Error initializing NetworkServer class.\n");
 	}
-    
-	error = false;
     
 	return self;
 }
@@ -150,7 +133,8 @@ ignoreSigpipe()
 		}
 		NSLog(@"New connection successful, to %@ (fd: %d).", hostnameString, fileDescriptor);
 		
-		[networkSession setHostname: hostnameString];
+		[networkSession setHostname:hostnameString];
+        [hostnameString release];
 		
 	} else {
 		NSLog(@"Connection attempt failed.");
@@ -158,7 +142,7 @@ ignoreSigpipe()
 		return nil;
 	}		
 	
-    //	[networkSession release];
+    [networkSession autorelease];
 	return networkSession;
 }
 
