@@ -14,6 +14,13 @@
 #define CHANNELS 8
 #define NUM_BUFFERS 3
 
+NSString *audioSourceNameKey = @"audioSourceName";
+NSString *audioSourceNominalSampleRateKey = @"audioSourceNominalSampleRate";
+NSString *audioSourceAvailableSampleRatesKey = @"audioSourceAvailableSampleRates";
+NSString *audioSourceInputChannelsKey = @"audioSourceInputChannels";
+NSString *audioSourceOutputChannelsKey = @"audioSourceOutputChannels";
+NSString *audioSourceDeviceIDKey = @"audioSourceDeviceID";
+
 // define a C struct from the Obj-C object so audio callback can access data
 /*
  typedef struct {
@@ -80,15 +87,24 @@ void handleInputBuffer(void *aqData,
                                    &property, 0, NULL, &propertySize);
     
     // Create the array for device IDs
-    AudioDeviceID *devices = (AudioDeviceID *)malloc(propertySize);
+    AudioDeviceID *deviceIDs = (AudioDeviceID *)malloc(propertySize);
     
     // Get the device IDs
     AudioObjectGetPropertyData(kAudioObjectSystemObject, 
                                &property, 0, NULL, 
-                               &propertySize, devices);
-
+                               &propertySize, deviceIDs);
+    
     NSUInteger numDevices = propertySize / sizeof(AudioDeviceID);
+    
+    // This is the array to hold the NSDictionaries
+    devices = [[NSMutableArray alloc] initWithCapacity:numDevices];
+    
+    // Get per-device information
     for (int i = 0; i < numDevices; i++) {
+        NSMutableDictionary *deviceDict = [[NSMutableDictionary alloc] init];
+        [deviceDict setValue:[NSNumber numberWithInt:i]
+                                              forKey:audioSourceDeviceIDKey];
+        
         CFStringRef string;
 
         // Get the name of the audio device
@@ -97,50 +113,34 @@ void handleInputBuffer(void *aqData,
         property.mElement  = kAudioObjectPropertyElementMaster;
 
         propertySize = sizeof(string);
-        AudioObjectGetPropertyData(devices[i], &property, 0, NULL, 
+        AudioObjectGetPropertyData(deviceIDs[i], &property, 0, NULL, 
                                    &propertySize, &string);
-        NSString *deviceName = (NSString *)string;
+
+        // Even though it's probably OK to use the CFString as an NSString
+        // I'm going to make a copy, just to be safe.
+        NSString *deviceName = [(NSString *)string copy];
+        CFRelease(string);
+        
+        [deviceDict setValue:deviceName
+                      forKey:audioSourceNameKey];
+
+        // The string given from the property has +1 retain,
+        // we need to make sure that we release it.
+        [deviceName release];
         
         Float64 currentSampleRate = 0;
         propertySize = sizeof(currentSampleRate);
-        AudioDeviceGetProperty(devices[i], 0, NO, 
+        AudioDeviceGetProperty(deviceIDs[i], 0, NO, 
                                kAudioDevicePropertyNominalSampleRate,
                                &propertySize, &currentSampleRate);
 
         NSLog(@"Device %d: %@ @ %1.1f", i, deviceName, currentSampleRate);
 
-        // Crap-shoot
-/*      property.mSelector = kAudioObjectPropertyOwnedObjects;
-        property.mScope    = kAudioObjectPropertyScopeGlobal;
-        property.mElement  = kAudioObjectPropertyElementMaster;
-        if( AudioObjectHasProperty(devices[i], &property)) {
-            AudioDeviceID *subDevices;
-            propertySize = sizeof(subDevices);
-            AudioObjectGetPropertyDataSize(devices[i], &property, 
-                                           0, NULL, &propertySize);
-            subDevices = malloc(propertySize);
-            AudioObjectGetPropertyData(devices[i], &property, 0, NULL,
-                                       &propertySize, subDevices);
-            
-            NSUInteger numSubObjects = propertySize / sizeof(AudioDeviceID);
-            for (int j = 0; j < numSubObjects; j++) {
-                AudioObjectShow(subDevices[j]);
-                
-                // Get the name of the audio device
-//                property.mSelector = kAudioObjectPropertyName;
-//                property.mScope    = kAudioObjectPropertyScopeGlobal;
-//                property.mElement  = kAudioObjectPropertyElementName;
-//                
-//                propertySize = sizeof(string);
-//                AudioObjectGetPropertyData(subDevices[j], &property, 0, NULL, 
-//                                           &propertySize, &string);
-//                NSString *subObjectName = (NSString *)string;
-//                NSLog(@"Owned object %d: %@", j, subObjectName);
-            }
-        }
-*/
+        [deviceDict setValue:[NSNumber numberWithFloat:currentSampleRate]
+                      forKey:audioSourceNominalSampleRateKey];
+        
         // Using stream objects
-        AudioDeviceGetPropertyInfo(devices[i], 0, NO, 
+/*        AudioDeviceGetPropertyInfo(devices[i], 0, NO, 
                                    kAudioDevicePropertyStreams, 
                                    &propertySize, &writable);
         AudioStreamID *streams = malloc(propertySize);
@@ -160,41 +160,76 @@ void handleInputBuffer(void *aqData,
                 NSLog(@"Stream %d is an input.", j);
             }
         }
-        
+*/        
+
         // Get an array of sample rates
         AudioValueRange *sampleRates;
-        AudioDeviceGetPropertyInfo(devices[i], 0, NO, 
+        AudioDeviceGetPropertyInfo(deviceIDs[i], 0, NO, 
                                    kAudioDevicePropertyAvailableNominalSampleRates, 
                                    &propertySize, &writable);
         sampleRates = (AudioValueRange *)malloc(propertySize);
-        AudioDeviceGetProperty(devices[i], 0, NO, 
+        AudioDeviceGetProperty(deviceIDs[i], 0, NO, 
                                kAudioDevicePropertyAvailableNominalSampleRates, 
                                &propertySize, sampleRates);
         
         NSUInteger numSampleRates = propertySize / sizeof(AudioValueRange);
+        NSMutableArray *sampleRateTempArray = [[NSMutableArray alloc] init];
         for (int j = 0; j < numSampleRates; j++) {
+            NSRange sampleRange = {sampleRates[j].mMinimum,
+                                   sampleRates[j].mMaximum};
+            [sampleRateTempArray addObject:[NSValue valueWithRange:sampleRange]];
             NSLog(@"Sample rate range %d: %f - %f", j,
                   sampleRates[j].mMinimum,
                   sampleRates[j].mMinimum);
         }
         
-        // Get the number of channels for the device
+        // Create a immutable copy of the available sample rate array
+        // and store it into the NSDict
+        NSArray *tempArray = [sampleRateTempArray copy];
+        [sampleRateTempArray release];
+        [deviceDict setValue:tempArray
+                      forKey:audioSourceAvailableSampleRatesKey];
+        [tempArray release];
+        
+        // Get the number of output channels for the device
         AudioBufferList bufferList;
         propertySize = sizeof(bufferList);
-        AudioDeviceGetProperty(devices[i], 0, NO, 
+        AudioDeviceGetProperty(deviceIDs[i], 0, NO, 
+                               kAudioDevicePropertyStreamConfiguration, 
+                               &propertySize, &bufferList);
+        
+        int outChannels, inChannels;
+        if (bufferList.mNumberBuffers > 0) {
+            outChannels = bufferList.mBuffers[0].mNumberChannels;
+            NSLog(@"%d output channels.", outChannels);
+            [deviceDict setValue:[NSNumber numberWithInt:outChannels]
+                          forKey:audioSourceOutputChannelsKey];
+        } else {
+            [deviceDict setValue:[NSNumber numberWithInt:0]
+                          forKey:audioSourceOutputChannelsKey];            
+        }
+
+        // Again for input channels
+        propertySize = sizeof(bufferList);
+        AudioDeviceGetProperty(deviceIDs[i], 0, YES, 
                                kAudioDevicePropertyStreamConfiguration, 
                                &propertySize, &bufferList);
         
         // The number of channels is the number of buffers.
         // The actual buffers are NULL.
-        // Apparently, this only works for output channels...
         if (bufferList.mNumberBuffers > 0) {
-            NSUInteger channels = bufferList.mBuffers[0].mNumberChannels;
-            NSLog(@"%lu channels.", channels);
+            inChannels = bufferList.mBuffers[0].mNumberChannels;
+            NSLog(@"%d input channels.", inChannels);
+            [deviceDict setValue:[NSNumber numberWithInt:inChannels]
+                          forKey:audioSourceInputChannelsKey];
+        } else {
+            [deviceDict setValue:[NSNumber numberWithInt:0]
+                          forKey:audioSourceInputChannelsKey];
         }
         
-        // Create a NSDictionary with all this lovely data
-        
+        // Add this new device dict to the array and release it
+        [devices addObject:deviceDict];
+        [deviceDict release];
     }
     
     return self;

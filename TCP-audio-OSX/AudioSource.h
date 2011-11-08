@@ -44,6 +44,8 @@ struct AQRecorderState {
 	id							 delegate;
 	NetworkSession				*session;
 	
+    NSMutableArray              *devices;
+    
 	// Core Audio device
 	AudioDeviceID				 device;
     // Size of the audio buffer for device
