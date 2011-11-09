@@ -20,6 +20,7 @@ extern NSString *audioSourceAvailableSampleRatesKey;
 extern NSString *audioSourceInputChannelsKey;
 extern NSString *audioSourceOutputChannelsKey;
 extern NSString *audioSourceDeviceIDKey;
+extern NSString *audioSourceDeviceUIDKey;
 
 @class AppDelegate;
 @class AudioSource;
@@ -55,8 +56,12 @@ struct AQRecorderState {
     
 	// Core Audio device
 	AudioDeviceID				 device;
+    float                        sampleRate;
+    int                          channels;
+    
     // Size of the audio buffer for device
 	UInt32						 deviceBufferSize;
+
     // info about the default device
 	AudioStreamBasicDescription	 deviceFormat;
 };
@@ -67,7 +72,11 @@ struct AQRecorderState {
 
 - (id)init;
 
-- (void)setSession: (NetworkSession *)newSession;
+- (void)setDelegate:(id)delegate;
+
+- (void)setDevice:(int)device;
+- (void)setSampleRate:(float)sampleRate;
+- (void)setChannels:(int)channels;
 
 - (void)startAudio;
 - (void)stopAudio;

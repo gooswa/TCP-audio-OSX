@@ -10,9 +10,8 @@
 #import "AudioSource.h"
 #import <CoreAudio/CoreAudio.h>
 
-#define FRAMES 1024
-#define CHANNELS 8
-#define NUM_BUFFERS 3
+#define FRAMES      1024
+#define NUM_BUFFERS 4
 
 NSString *audioSourceNameKey = @"audioSourceName";
 NSString *audioSourceNominalSampleRateKey = @"audioSourceNominalSampleRate";
@@ -20,15 +19,7 @@ NSString *audioSourceAvailableSampleRatesKey = @"audioSourceAvailableSampleRates
 NSString *audioSourceInputChannelsKey = @"audioSourceInputChannels";
 NSString *audioSourceOutputChannelsKey = @"audioSourceOutputChannels";
 NSString *audioSourceDeviceIDKey = @"audioSourceDeviceID";
-
-// define a C struct from the Obj-C object so audio callback can access data
-/*
- typedef struct {
- @defs(AudioSource);
- } audiosourcedef;
- */
-
-
+NSString *audioSourceDeviceUIDKey = @"audioSourceDeviceUID";
 
 void handleInputBuffer(void *aqData,
                        AudioQueueRef audioQueue,
@@ -47,9 +38,9 @@ void handleInputBuffer(void *aqData,
                                       size:inBuffer->mAudioDataByteSize];
 	}
     
-    else {
-		NSLog(@"Discarded AudioQueue buffer (network connection closed)");
-	}
+//    else {
+//		NSLog(@"Discarded AudioQueue buffer (network connection closed)");
+//	}
     
     // Return the buffer to the audio queue
 	AudioQueueEnqueueBuffer(recorderState->mQueue, inBuffer, 0, 0);
@@ -102,7 +93,7 @@ void handleInputBuffer(void *aqData,
         
         CFStringRef string;
 
-        // Get the name of the audio device
+    // Get the name of the audio device
         property.mSelector = kAudioObjectPropertyName;
         property.mScope    = kAudioObjectPropertyScopeGlobal;
         property.mElement  = kAudioObjectPropertyElementMaster;
@@ -123,41 +114,31 @@ void handleInputBuffer(void *aqData,
         // we need to make sure that we release it.
         [deviceName release];
         
+    // Get the UID of the device, used by the audioQueue
+        property.mSelector = kAudioDevicePropertyDeviceUID;
+        propertySize = sizeof(string);
+        AudioObjectGetPropertyData(deviceIDs[i], &property, 0, NULL, 
+                                   &propertySize, &string);
+        
+        // Again, copy to a NSString...
+        NSString *deviceUID = [(NSString *)string copy];
+        CFRelease(string);
+        [deviceDict setValue:deviceUID
+                      forKey:audioSourceDeviceUIDKey];
+        [deviceUID release];
+        
+    // Get the nominal sample rate
         Float64 currentSampleRate = 0;
         propertySize = sizeof(currentSampleRate);
         AudioDeviceGetProperty(deviceIDs[i], 0, NO, 
                                kAudioDevicePropertyNominalSampleRate,
                                &propertySize, &currentSampleRate);
 
-//        NSLog(@"Device %d: %@ @ %1.1f", i, deviceName, currentSampleRate);
 
         [deviceDict setValue:[NSNumber numberWithFloat:currentSampleRate]
                       forKey:audioSourceNominalSampleRateKey];
         
-        // Using stream objects
-/*        AudioDeviceGetPropertyInfo(devices[i], 0, NO, 
-                                   kAudioDevicePropertyStreams, 
-                                   &propertySize, &writable);
-        AudioStreamID *streams = malloc(propertySize);
-        AudioDeviceGetProperty(devices[i], 0, NO, 
-                               kAudioDevicePropertyStreams, 
-                               &propertySize, streams);
-        NSUInteger numStreams = propertySize / sizeof(AudioDeviceID);
-        for (int j = 0; j < numStreams; j++) {
-            uint32 direction = -1;
-            propertySize = sizeof(direction);
-            AudioStreamGetProperty(streams[j], 0, 
-                                   kAudioStreamPropertyDirection, 
-                                   &propertySize, &direction);
-            if (direction == 0) {
-                NSLog(@"Stream %d is an output.", j);
-            } else {
-                NSLog(@"Stream %d is an input.", j);
-            }
-        }
-*/        
-
-        // Get an array of sample rates
+    // Get an array of sample rates
         AudioValueRange *sampleRates;
         AudioDeviceGetPropertyInfo(deviceIDs[i], 0, NO, 
                                    kAudioDevicePropertyAvailableNominalSampleRates, 
@@ -176,9 +157,6 @@ void handleInputBuffer(void *aqData,
             sampleRange.location = sampleRates[j].mMinimum;
             
             [sampleRateTempArray addObject:[NSValue valueWithRange:sampleRange]];
-//            NSLog(@"Sample rate range %d: %f - %f", j,
-//                  sampleRates[j].mMinimum,
-//                  sampleRates[j].mMinimum);
         }
         
         // Create a immutable copy of the available sample rate array
@@ -189,7 +167,7 @@ void handleInputBuffer(void *aqData,
                       forKey:audioSourceAvailableSampleRatesKey];
         [tempArray release];
         
-        // Get the number of output channels for the device
+    // Get the number of output channels for the device
         AudioBufferList bufferList;
         propertySize = sizeof(bufferList);
         AudioDeviceGetProperty(deviceIDs[i], 0, NO, 
@@ -199,7 +177,6 @@ void handleInputBuffer(void *aqData,
         int outChannels, inChannels;
         if (bufferList.mNumberBuffers > 0) {
             outChannels = bufferList.mBuffers[0].mNumberChannels;
-//            NSLog(@"%d output channels.", outChannels);
             [deviceDict setValue:[NSNumber numberWithInt:outChannels]
                           forKey:audioSourceOutputChannelsKey];
         } else {
@@ -207,7 +184,7 @@ void handleInputBuffer(void *aqData,
                           forKey:audioSourceOutputChannelsKey];            
         }
 
-        // Again for input channels
+    // Again for input channels
         propertySize = sizeof(bufferList);
         AudioDeviceGetProperty(deviceIDs[i], 0, YES, 
                                kAudioDevicePropertyStreamConfiguration, 
@@ -217,7 +194,6 @@ void handleInputBuffer(void *aqData,
         // The actual buffers are NULL.
         if (bufferList.mNumberBuffers > 0) {
             inChannels = bufferList.mBuffers[0].mNumberChannels;
-//            NSLog(@"%d input channels.", inChannels);
             [deviceDict setValue:[NSNumber numberWithInt:inChannels]
                           forKey:audioSourceInputChannelsKey];
         } else {
@@ -233,15 +209,38 @@ void handleInputBuffer(void *aqData,
     return self;
 }
 
-- (bool)createAudioSource
+//- (void)setDelegate:(id <audioSourceDelegate>)inDelegate
+- (void)setDelegate:(id)inDelegate
 {
+    delegate = inDelegate;
+}
+
+- (void)setDevice:(int)inDevice
+{
+    device = inDevice;
+}
+
+- (void)setSampleRate:(float)inSampleRate
+{
+    sampleRate = inSampleRate;
+}
+
+- (void)setChannels:(int)inChannels
+{
+    channels = inChannels;
+}
+
+- (void)startAudio
+{
+	NSLog(@"Audio Start Request.");
+
     // Keep a self-referential pointer in recorderState
 	recorderState.audioSource = self;
 	
-    // Setup the desired parameters from the Audio Queue
+// Setup the desired parameters from the Audio Queue
 	recorderState.mDataFormat.mFormatID = kAudioFormatLinearPCM;
-	recorderState.mDataFormat.mSampleRate = 96000.0;
-	recorderState.mDataFormat.mChannelsPerFrame = 2;
+	recorderState.mDataFormat.mSampleRate = sampleRate;
+	recorderState.mDataFormat.mChannelsPerFrame = channels;
 	recorderState.mDataFormat.mBitsPerChannel = 32;
 	recorderState.mDataFormat.mBytesPerPacket =
     recorderState.mDataFormat.mBytesPerFrame =
@@ -249,7 +248,7 @@ void handleInputBuffer(void *aqData,
 	recorderState.mDataFormat.mFramesPerPacket = 1;
 	recorderState.mDataFormat.mFormatFlags = kLinearPCMFormatFlagIsFloat;
     
-    // Create the new Audio Queue
+// Create the new Audio Queue
 	OSStatus result = AudioQueueNewInput(&recorderState.mDataFormat,
 										 handleInputBuffer,
                                          &recorderState,
@@ -257,54 +256,36 @@ void handleInputBuffer(void *aqData,
                                          kCFRunLoopCommonModes,
                                          0,
 										 &recorderState.mQueue);
-	
-	// Get the full audio format from the AudioQueue
-	CFStringRef device_UID;
-	NSString *deviceString;
-    if( result == kAudioHardwareNoError ) {
-		UInt32 dataFormatSize = sizeof( recorderState.mDataFormat );
-		AudioQueueGetProperty(recorderState.mQueue,
-							  kAudioConverterCurrentInputStreamDescription,
-							  &recorderState.mDataFormat, &dataFormatSize);
-        
-		dataFormatSize = sizeof(device_UID);
-        AudioQueueGetProperty(recorderState.mQueue,
-							  kAudioQueueProperty_CurrentDevice,
-							  &device_UID, &dataFormatSize);
-
-        deviceString = (NSString *)device_UID;
+	if (result != kAudioHardwareNoError) {
+        NSLog(@"Unable to create new input audio queue.");
+        return;
     }
     
-    // We got some error creating the input
-    else {
-        initialized = NO;
-        return NO;
+// Set the device for this audioQueue
+    NSDictionary *deviceDict = [devices objectAtIndex:device];
+    CFStringRef   deviceUID;
+    deviceUID = (CFStringRef)[deviceDict objectForKey:audioSourceDeviceUIDKey];
+    uint32 propertySize = sizeof(CFStringRef);
+    result = AudioQueueSetProperty(recorderState.mQueue, 
+                                   kAudioQueueProperty_CurrentDevice, 
+                                   &deviceUID, propertySize);
+    
+    if (result != kAudioHardwareNoError) {
+        NSLog(@"Unable to set audio queue device to %@", deviceUID);
+        return;
     }
     
-	NSLog(@"Using audio device UID: %@\n", deviceString);
-	NSLog(@"Got channel count %d from driver.\n", recorderState.mDataFormat.mChannelsPerFrame);
+	NSLog(@"Using audio device UID: %@\n", deviceUID);
 	
     // Allocate buffer list, buffers and provide to audioQueue
 	recorderState.mBuffers = (AudioQueueBufferRef *)malloc(sizeof(AudioQueueBufferRef *) * NUM_BUFFERS);
 	for( int i = 0; i < NUM_BUFFERS; i++ ) {
-		AudioQueueAllocateBuffer(recorderState.mQueue, FRAMES*CHANNELS*sizeof(SInt16), &recorderState.mBuffers[i]);
+		AudioQueueAllocateBuffer(recorderState.mQueue, FRAMES*channels*sizeof(Float32), &recorderState.mBuffers[i]);
 		AudioQueueEnqueueBuffer (recorderState.mQueue, recorderState.mBuffers[i], 0, NULL);
-	}
-	
-	initialized = YES;
-	
-	return YES;
-}
-
-- (void)startAudio
-{
-	NSLog(@"Audio Start Request.");
-
-	if( initialized ) {
-		running = true;
-		
-		AudioQueueStart(recorderState.mQueue, NULL);		
-	}
+	}	
+    
+    AudioQueueStart(recorderState.mQueue, NULL);		
+    running = true;
 }
 
 - (void)stopAudio
