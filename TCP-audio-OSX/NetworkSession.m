@@ -10,12 +10,12 @@
 
 @implementation NetworkSession
 
-- (id)initWithHost:(NSString*)hostName Port:(int)port
+- (id)initWithHost:(NSString*)inHostName Port:(int)inPort
 {
 	self = [super init];
 	
 	if( self != nil ) {		
-		hp = gethostbyname( [hostName UTF8String] );
+		hp = gethostbyname( [inHostName UTF8String] );
 		if( hp == nil ) {
 			perror( "Looking up host address" );
 			goto error;
@@ -28,11 +28,13 @@
 		}
 		
 		memcpy((char *)&server.sin_addr, hp->h_addr_list[0], hp->h_length);
-		server.sin_port = htons((short)port);
+		server.sin_port = htons((short)inPort);
 		server.sin_family = AF_INET;
         
 		written = read =  0;
-		fileDescriptor = -1;		
+		fileDescriptor = -1;
+        
+        hostname = [inHostName retain];
 	} 
     
 	return self;
@@ -52,6 +54,7 @@ error:
 		sock = socket;
 		fileDescriptor = fd;
 		connected = true;
+        hostname = nil;
 	}
 	
 	return self;
@@ -190,7 +193,12 @@ error:
 
 - (void)setHostname:(NSString *)newHostname
 {
+    if (hostname != nil) {
+        [hostname release];
+    }
+    
 	hostname = newHostname;
+    [hostname retain];
 }
 
 - (void)setDelegate:(id)del
