@@ -13,6 +13,13 @@
 		3C06B482146343F000422C27 /* Credits.rtf in Resources */ = {isa = PBXBuildFile; fileRef = 3C06B480146343F000422C27 /* Credits.rtf */; };
 		3C06B485146343F000422C27 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C06B484146343F000422C27 /* AppDelegate.m */; };
 		3C06B488146343F000422C27 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 3C06B486146343F000422C27 /* MainMenu.xib */; };
+		3C74F13C1465AF1C00E6F435 /* CoreAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3CD4BADB14638735003525FB /* CoreAudio.framework */; };
+		3CD4BACD146345E9003525FB /* AudioSource.m in Sources */ = {isa = PBXBuildFile; fileRef = 3CD4BACC146345E9003525FB /* AudioSource.m */; };
+		3CD4BAD114634633003525FB /* NetworkServer.m in Sources */ = {isa = PBXBuildFile; fileRef = 3CD4BAD014634633003525FB /* NetworkServer.m */; };
+		3CD4BAD414634662003525FB /* NetworkSession.m in Sources */ = {isa = PBXBuildFile; fileRef = 3CD4BAD314634662003525FB /* NetworkSession.m */; };
+		3CD4BAD9146346E2003525FB /* README in Resources */ = {isa = PBXBuildFile; fileRef = 3CD4BAD8146346E2003525FB /* README */; };
+		3CD4BADE14638EE2003525FB /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3CD4BADD14638EE2003525FB /* AudioToolbox.framework */; };
+		3CD4BAE014638F71003525FB /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3CD4BADF14638F71003525FB /* CoreFoundation.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -29,6 +36,17 @@
 		3C06B483146343F000422C27 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		3C06B484146343F000422C27 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
 		3C06B487146343F000422C27 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/MainMenu.xib; sourceTree = "<group>"; };
+		3CD4BACB146345E9003525FB /* AudioSource.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AudioSource.h; sourceTree = "<group>"; };
+		3CD4BACC146345E9003525FB /* AudioSource.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AudioSource.m; sourceTree = "<group>"; };
+		3CD4BACF14634633003525FB /* NetworkServer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NetworkServer.h; sourceTree = "<group>"; };
+		3CD4BAD014634633003525FB /* NetworkServer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NetworkServer.m; sourceTree = "<group>"; };
+		3CD4BAD214634662003525FB /* NetworkSession.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NetworkSession.h; sourceTree = "<group>"; };
+		3CD4BAD314634662003525FB /* NetworkSession.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NetworkSession.m; sourceTree = "<group>"; };
+		3CD4BAD8146346E2003525FB /* README */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = README; sourceTree = SOURCE_ROOT; };
+		3CD4BADA14634F30003525FB /* TCP-audio-OSX.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = "TCP-audio-OSX.entitlements"; sourceTree = "<group>"; };
+		3CD4BADB14638735003525FB /* CoreAudio.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreAudio.framework; path = System/Library/Frameworks/CoreAudio.framework; sourceTree = SDKROOT; };
+		3CD4BADD14638EE2003525FB /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
+		3CD4BADF14638F71003525FB /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = System/Library/Frameworks/CoreFoundation.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -36,6 +54,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3C74F13C1465AF1C00E6F435 /* CoreAudio.framework in Frameworks */,
+				3CD4BAE014638F71003525FB /* CoreFoundation.framework in Frameworks */,
+				3CD4BADE14638EE2003525FB /* AudioToolbox.framework in Frameworks */,
 				3C06B472146343F000422C27 /* Cocoa.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -72,6 +93,9 @@
 		3C06B473146343F000422C27 /* Other Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				3CD4BADF14638F71003525FB /* CoreFoundation.framework */,
+				3CD4BADD14638EE2003525FB /* AudioToolbox.framework */,
+				3CD4BADB14638735003525FB /* CoreAudio.framework */,
 				3C06B474146343F000422C27 /* AppKit.framework */,
 				3C06B475146343F000422C27 /* CoreData.framework */,
 				3C06B476146343F000422C27 /* Foundation.framework */,
@@ -82,6 +106,13 @@
 		3C06B477146343F000422C27 /* TCP-audio-OSX */ = {
 			isa = PBXGroup;
 			children = (
+				3CD4BADA14634F30003525FB /* TCP-audio-OSX.entitlements */,
+				3CD4BACF14634633003525FB /* NetworkServer.h */,
+				3CD4BAD014634633003525FB /* NetworkServer.m */,
+				3CD4BAD214634662003525FB /* NetworkSession.h */,
+				3CD4BAD314634662003525FB /* NetworkSession.m */,
+				3CD4BACB146345E9003525FB /* AudioSource.h */,
+				3CD4BACC146345E9003525FB /* AudioSource.m */,
 				3C06B483146343F000422C27 /* AppDelegate.h */,
 				3C06B484146343F000422C27 /* AppDelegate.m */,
 				3C06B486146343F000422C27 /* MainMenu.xib */,
@@ -93,6 +124,7 @@
 		3C06B478146343F000422C27 /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
+				3CD4BAD8146346E2003525FB /* README */,
 				3C06B479146343F000422C27 /* TCP-audio-OSX-Info.plist */,
 				3C06B47A146343F000422C27 /* InfoPlist.strings */,
 				3C06B47D146343F000422C27 /* main.m */,
@@ -156,6 +188,7 @@
 				3C06B47C146343F000422C27 /* InfoPlist.strings in Resources */,
 				3C06B482146343F000422C27 /* Credits.rtf in Resources */,
 				3C06B488146343F000422C27 /* MainMenu.xib in Resources */,
+				3CD4BAD9146346E2003525FB /* README in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -168,6 +201,9 @@
 			files = (
 				3C06B47E146343F000422C27 /* main.m in Sources */,
 				3C06B485146343F000422C27 /* AppDelegate.m in Sources */,
+				3CD4BACD146345E9003525FB /* AudioSource.m in Sources */,
+				3CD4BAD114634633003525FB /* NetworkServer.m in Sources */,
+				3CD4BAD414634662003525FB /* NetworkSession.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -206,7 +242,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
-				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_ARC = NO;
 				COPY_PHASE_STRIP = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_DYNAMIC_NO_PIC = NO;
@@ -222,9 +258,9 @@
 				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.7;
+				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				ONLY_ACTIVE_ARCH = YES;
-				SDKROOT = macosx;
+				SDKROOT = macosx10.6;
 			};
 			name = Debug;
 		};
@@ -233,7 +269,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
-				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_ARC = NO;
 				COPY_PHASE_STRIP = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GCC_C_LANGUAGE_STANDARD = gnu99;
@@ -243,18 +279,24 @@
 				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.7;
-				SDKROOT = macosx;
+				MACOSX_DEPLOYMENT_TARGET = 10.5;
+				SDKROOT = macosx10.6;
 			};
 			name = Release;
 		};
 		3C06B48C146343F000422C27 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_OBJC_ARC = NO;
+				CLANG_WARN_OBJCPP_ARC_ABI = NO;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "TCP-audio-OSX/TCP-audio-OSX-Prefix.pch";
 				INFOPLIST_FILE = "TCP-audio-OSX/TCP-audio-OSX-Info.plist";
+				MACOSX_DEPLOYMENT_TARGET = 10.5;
+				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				RUN_CLANG_STATIC_ANALYZER = YES;
+				SDKROOT = macosx10.6;
 				WRAPPER_EXTENSION = app;
 			};
 			name = Debug;
@@ -262,10 +304,16 @@
 		3C06B48D146343F000422C27 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_OBJC_ARC = NO;
+				CLANG_WARN_OBJCPP_ARC_ABI = NO;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "TCP-audio-OSX/TCP-audio-OSX-Prefix.pch";
 				INFOPLIST_FILE = "TCP-audio-OSX/TCP-audio-OSX-Info.plist";
+				MACOSX_DEPLOYMENT_TARGET = 10.5;
+				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				RUN_CLANG_STATIC_ANALYZER = YES;
+				SDKROOT = macosx10.6;
 				WRAPPER_EXTENSION = app;
 			};
 			name = Release;
@@ -289,6 +337,7 @@
 				3C06B48D146343F000422C27 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
