@@ -11,20 +11,24 @@
 #import "NetworkServer.h"
 #import "AudioSource.h"
 
+#define NETWORK_PORT 12345
+
 @interface AppDelegate : NSObject <NSApplicationDelegate,
-                                   NSComboBoxDataSource>
-{    
-    IBOutlet NSComboBox     *source;
-//  IBOutlet NSComboBox     *bitDepth;   // not used, assume highest
-    IBOutlet NSComboBox     *sampleRate;
-    IBOutlet NSTextField    *channels;
-    IBOutlet NSButton       *startStopButton;
+                                   NSComboBoxDataSource,
+                                   NSTableViewDataSource,
+                                   NSTableViewDelegate>
+{
+    IBOutlet NSComboBox         *source;
+    IBOutlet NSComboBox         *sampleRate;
+    IBOutlet NSComboBox         *channels;
+    IBOutlet NSButton           *startStopButton;
+    IBOutlet NSTableView        *tableView;
+    IBOutlet NSProgressIndicator *progressIndicator;
     
-    IBOutlet NSArrayController *networkSessions;
-    NetworkServer   *networkServer;
-    AudioSource     *audioSource;
+    NSMutableArray              *networkSessions;
+    NetworkServer               *networkServer;
+    AudioSource                 *audioSource;
     
-//  NSMutableArray  *networkSessions;
 }
 
 @property (assign) IBOutlet NSWindow *window;
@@ -32,7 +36,7 @@
 // UI Actions
 - (IBAction)disconnect:(id)sender;
 - (IBAction)setAudioDevice:(id)sender;
-- (IBAction)startServer:(id)sender;
+- (IBAction)toggleServer:(id)sender;
 
 // Network events
 - (void)newNetworkSession:(NetworkSession *)session;
@@ -40,13 +44,5 @@
 
 // Audio source events
 - (void)audioData:(void *)data size:(NSUInteger)size;
-
-// Combo box data source methods
-// These are shared across all the combo boxes (select using aComboBox)
-- (NSString *)comboBox:(NSComboBox *)aComboBox completedString:(NSString *)string;
-- (NSUInteger)comboBox:(NSComboBox *)aComboBox indexOfItemWithStringValue:(NSString *)string;
-- (id)comboBox:(NSComboBox *)aComboBox objectValueForItemAtIndex:(NSInteger)index;
-- (NSInteger)numberOfItemsInComboBox:(NSComboBox *)aComboBox;
-
 
 @end
