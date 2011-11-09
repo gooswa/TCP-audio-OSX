@@ -34,6 +34,14 @@ int ignoreSigPipe();
         NSLog(@"Error initializing audioSource");
     }
     
+    [source setUsesDataSource:YES];
+    [source setDataSource:self];
+    [sampleRate setUsesDataSource:YES];
+    [sampleRate setDataSource:self];
+    [source selectItemAtIndex:0];   // Defalt to the first device
+    [source reloadData];
+    // Now, we should auto-select the nominal sample rate for the device
+    
 	// Disable signals for broken pipe (they're handled during the send call)
 	struct sigaction act;		
 	if( sigaction(SIGPIPE, NULL, &act) == -1)
@@ -106,7 +114,7 @@ int ignoreSigPipe();
 - (IBAction)startServer:(id)sender {
     // Disable audio configurations
     [source     setEnabled:NO];
-    [bitDepth   setEnabled:NO];
+//    [bitDepth   setEnabled:NO];
     [sampleRate setEnabled:NO];
     [channels   setEnabled:NO];
     
@@ -117,7 +125,7 @@ int ignoreSigPipe();
 - (IBAction)stopServer:(id)sender {
     // Reenable audio configurations
     [source     setEnabled:YES];
-    [bitDepth   setEnabled:YES];
+//    [bitDepth   setEnabled:YES];
     [sampleRate setEnabled:YES];
     [channels   setEnabled:YES];
     
@@ -126,7 +134,71 @@ int ignoreSigPipe();
 }
 
 - (IBAction)setAudioDevice:(id)sender {
-	NSLog(@"Recieved change audio unit request.\n");    
+//    if ([sender indexOfSelectedItem] < 0) {
+//        [sender selectItemAtIndex:0];
+//    }
+
+	NSLog(@"Recieved change audio unit request (%d).\n", [sender indexOfSelectedItem]);    
+}
+
+#pragma mark -
+#pragma mark Combo box data source methods
+
+- (NSInteger)numberOfItemsInComboBox:(NSComboBox *)aComboBox
+{
+    if (aComboBox == source) {
+        NSArray *audioDevices = [audioSource devices];
+        return [audioDevices count];
+    }
+    
+    if (aComboBox == sampleRate) {
+        if ([source indexOfSelectedItem] < 0) {
+            return 0;
+        }
+        
+        // Get the selected device
+        NSDictionary *device;
+        device = [[audioSource devices] objectAtIndex:[source indexOfSelectedItem]];
+        
+        return [[device objectForKey:audioSourceAvailableSampleRatesKey] count];
+    }
+
+    return 0;
+}
+
+- (id)comboBox:(NSComboBox *)aComboBox objectValueForItemAtIndex:(NSInteger)index
+{
+    if (aComboBox == source) {
+        NSString *string = nil;
+        
+        // Search the audioDevices array for the object at given index
+        NSArray *audioDevices = [audioSource devices];
+        for (NSDictionary *device in audioDevices) {
+            if ([[device objectForKey:audioSourceDeviceIDKey] intValue] == index) {
+                string = [device objectForKey:audioSourceNameKey];
+            }
+        }
+        
+        return string;
+    }
+    
+    if (aComboBox == sampleRate) {
+        NSString *string;
+        
+        // Get the selected device
+        NSDictionary *device;
+        device = [[audioSource devices] objectAtIndex:[source indexOfSelectedItem]];
+
+        // Get the sample rate at given index
+        NSArray *sampleRates = [device objectForKey:audioSourceAvailableSampleRatesKey];
+        NSValue *sampleRateValue = [sampleRates objectAtIndex:index];
+        NSRange sampleRateRange = [sampleRateValue rangeValue];
+        string = [NSString stringWithFormat:@"%0.1f", sampleRateRange.location];
+        
+        return string;
+    }
+    
+    return nil;
 }
 
 @end

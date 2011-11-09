@@ -11,10 +11,11 @@
 #import "NetworkServer.h"
 #import "AudioSource.h"
 
-@interface AppDelegate : NSObject <NSApplicationDelegate>
+@interface AppDelegate : NSObject <NSApplicationDelegate,
+                                   NSComboBoxDataSource>
 {    
     IBOutlet NSComboBox     *source;
-    IBOutlet NSComboBox     *bitDepth;
+//  IBOutlet NSComboBox     *bitDepth;   // not used, assume highest
     IBOutlet NSComboBox     *sampleRate;
     IBOutlet NSTextField    *channels;
     IBOutlet NSButton       *startStopButton;
@@ -39,5 +40,13 @@
 
 // Audio source events
 - (void)audioData:(void *)data size:(NSUInteger)size;
+
+// Combo box data source methods
+// These are shared across all the combo boxes (select using aComboBox)
+- (NSString *)comboBox:(NSComboBox *)aComboBox completedString:(NSString *)string;
+- (NSUInteger)comboBox:(NSComboBox *)aComboBox indexOfItemWithStringValue:(NSString *)string;
+- (id)comboBox:(NSComboBox *)aComboBox objectValueForItemAtIndex:(NSInteger)index;
+- (NSInteger)numberOfItemsInComboBox:(NSComboBox *)aComboBox;
+
 
 @end
