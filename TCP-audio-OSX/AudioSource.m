@@ -57,13 +57,8 @@ void handleInputBuffer(void *aqData,
 
 @implementation AudioSource
 
-+ (NSArray *)getDeviceList
-{
-    //    AudioDeviceID
-    return nil;
-}
-
 @synthesize initialized;
+@synthesize devices;
 
 - (id)init
 {	
@@ -134,7 +129,7 @@ void handleInputBuffer(void *aqData,
                                kAudioDevicePropertyNominalSampleRate,
                                &propertySize, &currentSampleRate);
 
-        NSLog(@"Device %d: %@ @ %1.1f", i, deviceName, currentSampleRate);
+//        NSLog(@"Device %d: %@ @ %1.1f", i, deviceName, currentSampleRate);
 
         [deviceDict setValue:[NSNumber numberWithFloat:currentSampleRate]
                       forKey:audioSourceNominalSampleRateKey];
@@ -175,12 +170,15 @@ void handleInputBuffer(void *aqData,
         NSUInteger numSampleRates = propertySize / sizeof(AudioValueRange);
         NSMutableArray *sampleRateTempArray = [[NSMutableArray alloc] init];
         for (int j = 0; j < numSampleRates; j++) {
-            NSRange sampleRange = {sampleRates[j].mMinimum,
-                                   sampleRates[j].mMaximum};
+            // An NSRange is a location and length...
+            NSRange sampleRange;
+            sampleRange.length   = sampleRates[j].mMaximum - sampleRates[j].mMinimum;
+            sampleRange.location = sampleRates[j].mMinimum;
+            
             [sampleRateTempArray addObject:[NSValue valueWithRange:sampleRange]];
-            NSLog(@"Sample rate range %d: %f - %f", j,
-                  sampleRates[j].mMinimum,
-                  sampleRates[j].mMinimum);
+//            NSLog(@"Sample rate range %d: %f - %f", j,
+//                  sampleRates[j].mMinimum,
+//                  sampleRates[j].mMinimum);
         }
         
         // Create a immutable copy of the available sample rate array
@@ -201,7 +199,7 @@ void handleInputBuffer(void *aqData,
         int outChannels, inChannels;
         if (bufferList.mNumberBuffers > 0) {
             outChannels = bufferList.mBuffers[0].mNumberChannels;
-            NSLog(@"%d output channels.", outChannels);
+//            NSLog(@"%d output channels.", outChannels);
             [deviceDict setValue:[NSNumber numberWithInt:outChannels]
                           forKey:audioSourceOutputChannelsKey];
         } else {
@@ -219,7 +217,7 @@ void handleInputBuffer(void *aqData,
         // The actual buffers are NULL.
         if (bufferList.mNumberBuffers > 0) {
             inChannels = bufferList.mBuffers[0].mNumberChannels;
-            NSLog(@"%d input channels.", inChannels);
+//            NSLog(@"%d input channels.", inChannels);
             [deviceDict setValue:[NSNumber numberWithInt:inChannels]
                           forKey:audioSourceInputChannelsKey];
         } else {

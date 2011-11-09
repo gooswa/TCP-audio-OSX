@@ -14,6 +14,13 @@
 #import <CoreAudio/AudioHardware.h>
 #import "NetworkSession.h"
 
+extern NSString *audioSourceNameKey;
+extern NSString *audioSourceNominalSampleRateKey;
+extern NSString *audioSourceAvailableSampleRatesKey;
+extern NSString *audioSourceInputChannelsKey;
+extern NSString *audioSourceOutputChannelsKey;
+extern NSString *audioSourceDeviceIDKey;
+
 @class AppDelegate;
 @class AudioSource;
 
@@ -54,8 +61,9 @@ struct AQRecorderState {
 	AudioStreamBasicDescription	 deviceFormat;
 };
 
-@property(readonly) bool running;
-@property(readonly) bool initialized;
+@property(readonly) bool        running;
+@property(readonly) bool        initialized;
+@property(readonly) NSArray    *devices;
 
 - (id)init;
 
