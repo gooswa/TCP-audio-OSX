@@ -581,7 +581,7 @@
 											<string key="NSFrameSize">{438, 237}</string>
 											<reference key="NSSuperview" ref="1035669607"/>
 											<reference key="NSWindow"/>
-											<reference key="NSNextKeyView" ref="1011158894"/>
+											<reference key="NSNextKeyView" ref="1057327612"/>
 											<string key="NSReuseIdentifierKey">_NS:1828</string>
 											<bool key="NSEnabled">YES</bool>
 											<object class="NSTableHeaderView" key="NSHeaderView" id="580471951">
@@ -720,7 +720,6 @@
 									<string key="NSFrame">{{1, 119}, {223, 15}}</string>
 									<reference key="NSSuperview" ref="288424242"/>
 									<reference key="NSWindow"/>
-									<reference key="NSNextKeyView"/>
 									<string key="NSReuseIdentifierKey">_NS:1847</string>
 									<int key="NSsFlags">1</int>
 									<reference key="NSTarget" ref="288424242"/>
@@ -747,7 +746,7 @@
 							<string key="NSFrame">{{20, 20}, {440, 255}}</string>
 							<reference key="NSSuperview" ref="439893737"/>
 							<reference key="NSWindow"/>
-							<reference key="NSNextKeyView" ref="1057327612"/>
+							<reference key="NSNextKeyView" ref="1035669607"/>
 							<string key="NSReuseIdentifierKey">_NS:1824</string>
 							<int key="NSsFlags">133682</int>
 							<reference key="NSVScroller" ref="1011158894"/>
@@ -989,14 +988,6 @@
 					<int key="connectionID">576</int>
 				</object>
 				<object class="IBConnectionRecord">
-					<object class="IBActionConnection" key="connection">
-						<string key="label">disconnect:</string>
-						<reference key="source" ref="976324537"/>
-						<reference key="destination" ref="803548165"/>
-					</object>
-					<int key="connectionID">577</int>
-				</object>
-				<object class="IBConnectionRecord">
 					<object class="IBOutletConnection" key="connection">
 						<string key="label">source</string>
 						<reference key="source" ref="976324537"/>
@@ -1051,6 +1042,14 @@
 						<reference key="destination" ref="94678306"/>
 					</object>
 					<int key="connectionID">598</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBActionConnection" key="connection">
+						<string key="label">disconnectPressed:</string>
+						<reference key="source" ref="976324537"/>
+						<reference key="destination" ref="803548165"/>
+					</object>
+					<int key="connectionID">600</int>
 				</object>
 				<object class="IBConnectionRecord">
 					<object class="IBOutletConnection" key="connection">
@@ -1542,7 +1541,7 @@
 			<nil key="activeLocalization"/>
 			<dictionary class="NSMutableDictionary" key="localizations"/>
 			<nil key="sourceID"/>
-			<int key="maxID">598</int>
+			<int key="maxID">600</int>
 		</object>
 		<object class="IBClassDescriber" key="IBDocument.Classes">
 			<array class="NSMutableArray" key="referencedPartialClassDescriptions">
@@ -1550,13 +1549,13 @@
 					<string key="className">AppDelegate</string>
 					<string key="superclassName">NSObject</string>
 					<dictionary class="NSMutableDictionary" key="actions">
-						<string key="disconnect:">id</string>
+						<string key="disconnectPressed:">id</string>
 						<string key="setAudioDevice:">id</string>
 						<string key="toggleServer:">id</string>
 					</dictionary>
 					<dictionary class="NSMutableDictionary" key="actionInfosByName">
-						<object class="IBActionInfo" key="disconnect:">
-							<string key="name">disconnect:</string>
+						<object class="IBActionInfo" key="disconnectPressed:">
+							<string key="name">disconnectPressed:</string>
 							<string key="candidateClassName">id</string>
 						</object>
 						<object class="IBActionInfo" key="setAudioDevice:">
