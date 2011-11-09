@@ -13,6 +13,21 @@
 
 #define NETWORK_PORT 12345
 
+@interface AudioSendOperation : NSOperation {
+@private
+    NSDictionary *session;
+    NSData      *data;
+    id          notify;
+    SEL         selector;
+}
+
+- (id)initWithSession:(NSDictionary *)sessionDict
+              andData:(NSData *)data
+        onErrorNotify:(id)sender
+         withSelector:(SEL)selector;
+    
+@end
+
 @interface AppDelegate : NSObject <NSApplicationDelegate,
                                    NSComboBoxDataSource,
                                    NSTableViewDataSource,
@@ -26,6 +41,7 @@
     IBOutlet NSProgressIndicator *progressIndicator;
     
     NSMutableArray              *networkSessions;
+    NSMutableArray              *sessionOperationQueues;
     NetworkServer               *networkServer;
     AudioSource                 *audioSource;
     
@@ -34,7 +50,7 @@
 @property (assign) IBOutlet NSWindow *window;
 
 // UI Actions
-- (IBAction)disconnect:(id)sender;
+- (IBAction)disconnectPressed:(id)sender;
 - (IBAction)setAudioDevice:(id)sender;
 - (IBAction)toggleServer:(id)sender;
 
@@ -43,6 +59,6 @@
 - (void)sessionTerminated:(NetworkSession *)session;
 
 // Audio source events
-- (void)audioData:(void *)data size:(NSUInteger)size;
+- (void)audioBytes:(void *)data size:(NSUInteger)size;
 
 @end

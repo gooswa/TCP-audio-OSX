@@ -8,6 +8,53 @@
 
 #import "AppDelegate.h"
 
+NSString *sessionNetworkKey = @"sessionNetwork";
+NSString *sessionOperationQueueKey = @"sessionOperationQueue";
+
+@implementation AudioSendOperation
+
+- (id)initWithSession:(NSDictionary *)sessionDict
+              andData:(NSData *)inData
+        onErrorNotify:(id)inSender
+         withSelector:(SEL)inSelector
+{
+    self = [super init];
+    
+    if (self == nil) {
+        NSLog(@"Unable to create AudioSendOperation.");
+        return self;
+    }
+    
+    session     = [sessionDict retain];
+    data        = [inData retain];
+    selector    = inSelector;
+    notify      = inSender;
+    
+    return self;
+}
+
+- (void)main
+{
+    NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+
+    bool success = NO;
+    
+    success = [[session objectForKey:sessionNetworkKey] sendData:data];
+    
+    if (!success) {
+        [notify performSelectorOnMainThread:selector
+                                 withObject:session
+                              waitUntilDone:NO];
+    }
+    
+    [session release];
+    [data release];
+    
+    [pool drain];
+}
+
+@end
+
 @implementation AppDelegate
 
 @synthesize window = _window;
@@ -61,11 +108,6 @@
     [self setAudioDevice:self];
 }
 
-- (void)audioData:(void *)data size:(NSUInteger)size
-{
-    return;
-}
-
 #pragma mark -
 #pragma mark NetworkServer Delegate Methods
 - (void)newNetworkSession:(NetworkSession *)newSession
@@ -81,7 +123,19 @@
     
     // Setup the new session
     [newSession setDelegate:self];
-    [networkSessions addObject:newSession];
+    
+    // Setup an operation queue (serially)
+    NSOperationQueue *queue = [[NSOperationQueue alloc] init];
+    [queue setMaxConcurrentOperationCount:1];
+    
+    // Create a dictionary for this session
+    NSDictionary *dict = [[NSDictionary alloc] initWithObjectsAndKeys:
+                          newSession, sessionNetworkKey,
+                          queue, sessionOperationQueueKey , nil];
+    
+    [networkSessions addObject:dict];
+    [dict release];
+    [queue release];
     
     // Notify the tableViewController of the new entry
     [tableView reloadData];
@@ -91,6 +145,24 @@
 #pragma mark NetworkSession Delegate Methods
 - (void)sessionTerminated:(NetworkSession *)session
 {
+    NSDictionary *dict = nil;
+    
+    // Locate the dict matching this session in the array
+    for (NSDictionary *sessionDict in networkSessions) {
+        if ([sessionDict objectForKey:sessionNetworkKey] == session) {
+            dict = sessionDict;
+        }
+    }
+    
+    if (dict == nil) {
+        NSLog(@"Unable to find dictionary matching session with %@", [session hostname]);
+        return;
+    }
+    
+    // Clean out the operation queue
+    [[dict objectForKey:sessionOperationQueueKey] cancelAllOperations];
+
+    // Release resources
     [networkSessions removeObject:session];
     
     if ([networkSessions count] == 0) {
@@ -103,23 +175,75 @@
 }
 
 #pragma mark -
-#pragma mark User interface actions
-- (IBAction)disconnect:(id)sender {
-	NSLog(@"Recieved disconnect request.\n");
-	
-    // This is wrong
-    NSInteger index = 0;
-    index = [tableView selectedRow];
+#pragma mark Other network and audioSourceDelegate methods
+- (void)sendData:(NSData *)data
+              to:(NSDictionary *)sessionDict
+{
+    NetworkSession *session;
+    session = [sessionDict objectForKey:sessionOperationQueueKey];
+        
+    if ([session sendData:data] == NO) {
+        // If there was an error print a message
+        NSLog(@"Problem sending data to %@, disconnecting client.",
+              [[sessionDict objectForKey:sessionNetworkKey] hostname]);
+
+        // Then disonnect the host (on the main thread)
+        [self performSelectorOnMainThread:@selector(disconnect:)
+                               withObject:sessionDict
+                            waitUntilDone:NO];
+    }
+}
+
+- (void)audioBytes:(void *)bytes size:(NSUInteger)size
+{
+    // The audio data should be 32-bit floats with the channels interleaved.
+    // This is the format we want to send on the network, which means that we
+    // can just dump the bytes onto the sockets.  However, because the write
+    // operation can block if the channel to the remote host isn't capable of
+    // maintaining the data rate.  Therefore, we need send it asynchronously
+    // and have a mechanisim to drop audio frames if it comes to that.
     
-    // Find the index into the networkSessions array
-    NetworkSession *disconnectSession = [networkSessions objectAtIndex:index];
-    [disconnectSession retain];
+    // Create an NSData to be used in the operations
+    // This copies the bytes, becuase the caller needs to reuse the buffer.
+    NSData *data = [[NSData alloc] initWithBytes:bytes
+                                          length:size];
+    
+    for (NSDictionary *session in networkSessions) {
+        NSOperationQueue *queue;
+        queue = [session objectForKey:sessionOperationQueueKey];
+        
+        // Only enqueue this new block of data if the remote side is keeping up
+        if ([queue operationCount] < 10) {
+            AudioSendOperation *op;
+            op = [[AudioSendOperation alloc] initWithSession:session
+                                                     andData:data
+                                               onErrorNotify:self
+                                                withSelector:@selector(disconnect:)];
+            
+            [queue addOperation:op];
+            [op release];   
+        }
+    }
+    
+    [data release];
+    
+    return;
+}
+
+- (void)disconnect:(NSDictionary *)sessionDict
+{
+    NetworkSession *disconnectSession;
+    NSOperationQueue *disconnectQueue;
+    
+    disconnectSession = [sessionDict objectForKey:sessionNetworkKey];
+    disconnectQueue = [sessionDict objectForKey:sessionOperationQueueKey];
+    
+    // Cancel all operations on this host's operation queue
+    [disconnectQueue cancelAllOperations];
+    [disconnectSession disconnect];
     
     // Remove this session from the networkSessions array
-    [networkSessions removeObjectAtIndex:index];
-    
-    // Reload the tableview data
-    [tableView reloadData];
+    [networkSessions removeObject:sessionDict];
     
     // If the network sessions array is now empty stop processing audio
     if ([networkSessions count] == 0) {
@@ -127,11 +251,23 @@
         [progressIndicator stopAnimation:self];
     }
     
-    // Disconnect network and release
-	[disconnectSession disconnect];
-    [disconnectSession release];
+    [tableView reloadData];
+}
+
+
+#pragma mark -
+#pragma mark User interface actions
+- (IBAction)disconnectPressed:(id)sender {
+	NSLog(@"Recieved disconnect request.\n");
+	
+    NSInteger index = [tableView selectedRow];
     
-    // Notify the tableViewController of the change	
+    // Find the index into the networkSessions array
+    NSDictionary *dict = [networkSessions objectAtIndex:index];
+    [self disconnect:dict];
+    
+    // Reload the tableview data
+    [tableView reloadData];
 }
 
 - (IBAction)toggleServer:(id)sender {
@@ -167,11 +303,10 @@
         [networkServer close];
         
         // Close all current connections
-        do {
-            NetworkSession *session = [networkSessions objectAtIndex:0];
-            [session disconnect];
-            [networkSessions removeObject:session];
-        } while ([networkSessions count] > 0);
+        while ([networkSessions count] > 0) {
+            NSDictionary *session = [networkSessions objectAtIndex:0];
+            [self disconnect:session];
+        };
 
         // Update the tableview
         [tableView reloadData];
@@ -240,10 +375,11 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
             row:(NSInteger)row
 {
     NSString *columnIdentifier = [tableColumn identifier];
-
+    NSDictionary *dict = [networkSessions objectAtIndex:row];
+    
     // Only the hostname column has content
     if ([columnIdentifier isEqualToString:@"hostname"]) {
-        NSString *hostname = [[networkSessions objectAtIndex:row] hostname];
+        NSString *hostname = [[dict objectForKey:sessionNetworkKey] hostname];
         return hostname;
     }
 
