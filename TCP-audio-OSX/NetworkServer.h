@@ -36,7 +36,6 @@
 - (id)delegate;
 
 - (void)setDelegate: (id)delegate;
-- (bool)setPort;
 
 // Methods to accept a connection (
 - (NetworkSession *)accept;

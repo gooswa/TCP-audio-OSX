@@ -89,6 +89,11 @@
             if( networkSession != nil ) {
                 [delegate newNetworkSession: networkSession];			
             } else {
+                if (!started) {
+                    NSLog(@"Server shutdown, exiting loop.");
+                    return;
+                }
+                
                 NSLog(@"Error listening, retrying.");
             }
             
@@ -148,8 +153,9 @@
 
 - (void)close
 {
+    started = NO;
+    close(sock);
 	sock = fileDescriptor = -1;
-	// WE NEED MORE HERE!
 }
 
 - (bool)started
@@ -175,13 +181,6 @@
 - (void)setDelegate: (id)del
 {
 	delegate = del;
-}
-
-- (bool)setPort
-{
-	NSLog(@"Setting port not yet available.");
-	
-	return false;
 }
 
 @end
