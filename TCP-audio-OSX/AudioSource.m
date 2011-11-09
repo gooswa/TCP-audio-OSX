@@ -28,14 +28,16 @@ void handleInputBuffer(void *aqData,
                        UInt32 inNumPackets,
                        const AudioStreamPacketDescription *packetDesc)
 {
+    NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+    
 	struct AQRecorderState *recorderState = (struct AQRecorderState *)aqData;
 	
 //	if( inNumPackets == 0 && recorderState->mDataFormat.mBytesPerPacket != 0 )
 //		inNumPackets = inBuffer->mAudioDataByteSize / recorderState->mDataFormat.mBytesPerPacket;
 	
 	if( [recorderState->audioSource running] ) {		
-		[recorderState->delegate audioData:inBuffer->mAudioData
-                                      size:inBuffer->mAudioDataByteSize];
+		[recorderState->delegate audioBytes:inBuffer->mAudioData
+                                       size:inBuffer->mAudioDataByteSize];
 	}
     
 //    else {
@@ -44,6 +46,8 @@ void handleInputBuffer(void *aqData,
     
     // Return the buffer to the audio queue
 	AudioQueueEnqueueBuffer(recorderState->mQueue, inBuffer, 0, 0);
+    
+    [pool drain];
 }
 
 @implementation AudioSource
@@ -60,6 +64,9 @@ void handleInputBuffer(void *aqData,
 		return self;
 	}
 	
+    delegate = nil;
+    recorderState.mBuffers = nil;
+    
     // Variables used for each of the functions
     uint32 propertySize = 0;
     Boolean writable = NO;
@@ -166,6 +173,7 @@ void handleInputBuffer(void *aqData,
         [deviceDict setValue:tempArray
                       forKey:audioSourceAvailableSampleRatesKey];
         [tempArray release];
+        free(sampleRates);
         
     // Get the number of output channels for the device
         AudioBufferList bufferList;
@@ -206,13 +214,25 @@ void handleInputBuffer(void *aqData,
         [deviceDict release];
     }
     
+    free(deviceIDs);
+    
     return self;
+}
+
+- (void)dealloc
+{
+    free(recorderState.mBuffers);
+    [devices release];
 }
 
 //- (void)setDelegate:(id <audioSourceDelegate>)inDelegate
 - (void)setDelegate:(id)inDelegate
 {
-    delegate = inDelegate;
+    if (delegate != nil) {
+        [delegate release];
+    }
+    
+    delegate = [inDelegate retain];
 }
 
 - (void)setDevice:(int)inDevice
@@ -248,6 +268,9 @@ void handleInputBuffer(void *aqData,
 	recorderState.mDataFormat.mFramesPerPacket = 1;
 	recorderState.mDataFormat.mFormatFlags = kLinearPCMFormatFlagIsFloat;
     
+    // Set the delegate
+    recorderState.delegate = delegate;
+    
 // Create the new Audio Queue
 	OSStatus result = AudioQueueNewInput(&recorderState.mDataFormat,
 										 handleInputBuffer,
@@ -278,11 +301,13 @@ void handleInputBuffer(void *aqData,
 	NSLog(@"Using audio device UID: %@\n", deviceUID);
 	
     // Allocate buffer list, buffers and provide to audioQueue
-	recorderState.mBuffers = (AudioQueueBufferRef *)malloc(sizeof(AudioQueueBufferRef *) * NUM_BUFFERS);
-	for( int i = 0; i < NUM_BUFFERS; i++ ) {
-		AudioQueueAllocateBuffer(recorderState.mQueue, FRAMES*channels*sizeof(Float32), &recorderState.mBuffers[i]);
-		AudioQueueEnqueueBuffer (recorderState.mQueue, recorderState.mBuffers[i], 0, NULL);
-	}	
+    if (recorderState.mBuffers == nil) {
+        recorderState.mBuffers = (AudioQueueBufferRef *)malloc(sizeof(AudioQueueBufferRef *) * NUM_BUFFERS);
+        for( int i = 0; i < NUM_BUFFERS; i++ ) {
+            AudioQueueAllocateBuffer(recorderState.mQueue, FRAMES*channels*sizeof(Float32), &recorderState.mBuffers[i]);
+            AudioQueueEnqueueBuffer (recorderState.mQueue, recorderState.mBuffers[i], 0, NULL);
+        }
+    }
     
     AudioQueueStart(recorderState.mQueue, NULL);		
     running = true;
@@ -294,7 +319,7 @@ void handleInputBuffer(void *aqData,
 	
 	running = false;
 	
-	AudioQueueStop(recorderState.mQueue, YES);
+	AudioQueueStop(recorderState.mQueue, YES);    
 }
 
 - (bool)running

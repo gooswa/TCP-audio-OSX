@@ -38,7 +38,7 @@ struct AQRecorderState {
     AudioQueueBufferRef         *mBuffers;
     UInt32                       bufferByteSize;
     SInt64                       mCurrentPacket;
-    AppDelegate                 *delegate;
+    id                           delegate;
     AudioSource                 *audioSource;
 };
 
@@ -50,7 +50,6 @@ struct AQRecorderState {
 	bool						 initialized;
     
 	id							 delegate;
-	NetworkSession				*session;
 	
     NSMutableArray              *devices;
     
