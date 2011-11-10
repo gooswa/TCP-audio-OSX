@@ -243,7 +243,9 @@ NSString *sessionOperationQueueKey = @"sessionOperationQueue";
         queue = [session objectForKey:sessionOperationQueueKey];
         
         // Only enqueue this new block of data if the remote side is keeping up
-        if ([queue operationCount] < 10) {
+		// This is only available in 10.6, for 10.5 we have to just hope for the best
+		// any ideas?
+//        if ([queue operationCount] < 10) {
             AudioSendOperation *op;
             op = [[AudioSendOperation alloc] initWithSession:session
                                                      andData:data
@@ -252,7 +254,7 @@ NSString *sessionOperationQueueKey = @"sessionOperationQueue";
             
             [queue addOperation:op];
             [op release];   
-        }
+  //      }
     }
     
     [data release];
