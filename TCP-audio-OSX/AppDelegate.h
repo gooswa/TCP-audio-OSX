@@ -33,6 +33,7 @@
                                    NSTableViewDataSource,
                                    NSTableViewDelegate>
 {
+    IBOutlet NSWindow           *window;
     IBOutlet NSComboBox         *source;
     IBOutlet NSComboBox         *sampleRate;
     IBOutlet NSComboBox         *channels;

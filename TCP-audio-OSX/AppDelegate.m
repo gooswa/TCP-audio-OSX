@@ -57,7 +57,7 @@ NSString *sessionOperationQueueKey = @"sessionOperationQueue";
 
 @implementation AppDelegate
 
-@synthesize window = _window;
+@synthesize window;
 
 #pragma mark -
 #pragma mark NSApp Delegate Methods
@@ -117,7 +117,7 @@ NSString *sessionOperationQueueKey = @"sessionOperationQueue";
     // If this is the first network session,
     // we need to start the audio source
     if (![audioSource running]) {
-        [audioSource startAudio];
+//        [audioSource startAudio];
         [progressIndicator startAnimation:self];
     }
     
@@ -139,6 +139,36 @@ NSString *sessionOperationQueueKey = @"sessionOperationQueue";
     
     // Notify the tableViewController of the new entry
     [tableView reloadData];
+}
+
+- (void)serverError
+{
+    NSLog(@"Server encountered an error");
+    
+    // Shutdown the server
+    [networkServer close];
+    
+    // Close all current connections
+    while ([networkSessions count] > 0) {
+        NSDictionary *session = [networkSessions objectAtIndex:0];
+        [self disconnect:session];
+    };
+    
+    // Update the tableview
+    [tableView reloadData];
+    
+    // Stop the audio
+    [audioSource stopAudio];
+    [progressIndicator stopAnimation:self];
+    
+    // Re-enable audio configurations
+    [source     setEnabled:YES];
+    [sampleRate setEnabled:YES];
+    [channels   setEnabled:YES];
+    
+    // Change the label of the button
+    [startStopButton setTitle:@"Start"];
+    [window setTitle:@"TCP Audio - Error'd"];
 }
 
 #pragma mark -
@@ -246,8 +276,9 @@ NSString *sessionOperationQueueKey = @"sessionOperationQueue";
     [networkSessions removeObject:sessionDict];
     
     // If the network sessions array is now empty stop processing audio
+    // For now, disable this...  I think it causes problems
     if ([networkSessions count] == 0) {
-        [audioSource stopAudio];
+//        [audioSource stopAudio];
         [progressIndicator stopAnimation:self];
     }
     
@@ -274,6 +305,7 @@ NSString *sessionOperationQueueKey = @"sessionOperationQueue";
     if (![networkServer started]) {
         // Change the label of the button
         [startStopButton setTitle:@"Stop"];
+        [window setTitle:@"TCP Audio - Running"];
         
         // Open the server port
         [networkServer openWithPort:NETWORK_PORT];
@@ -297,6 +329,7 @@ NSString *sessionOperationQueueKey = @"sessionOperationQueue";
         [audioSource setDevice:device];
         [audioSource setSampleRate:rate];
         [audioSource setChannels:chans];
+        [audioSource startAudio];
         
     } else {
         // Shutdown the server
@@ -322,6 +355,7 @@ NSString *sessionOperationQueueKey = @"sessionOperationQueue";
         
         // Change the label of the button
         [startStopButton setTitle:@"Start"];
+        [window setTitle:@"TCP Audio - Stopped"];
     }
 }
 
