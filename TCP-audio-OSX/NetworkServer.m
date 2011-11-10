@@ -57,7 +57,10 @@
 	server.sin_addr.s_addr = INADDR_ANY;
 	server.sin_port = htons( (short)port );
 	
-	if( bind(  sock, (struct sockaddr*)&server, sizeof(server)) < 0 ) {
+    int retval = bind(sock,
+                      (struct sockaddr *)&server,
+                      (socklen_t)sizeof(server));
+	if( retval < 0 ) {
 		NSLog(@"Error binding to port");
 		error = true;
 		return false;
@@ -89,8 +92,10 @@
             if( networkSession != nil ) {
                 [delegate newNetworkSession: networkSession];			
             } else {
-                if (!started) {
-                    NSLog(@"Server shutdown, exiting loop.");
+                if (!started || error) {
+                    NSLog(@"Server shutdown or error, exiting loop.");
+                    [delegate serverError];
+
                     return;
                 }
                 
@@ -119,43 +124,56 @@
 	NSLog(@"Listening for Connection.");	
     
 	// Listen for a connection (loop if interrupted)
-	while( ((fileDescriptor = accept(sock, (struct sockaddr*)(&net_client), &len )) == -1) &&
-		  (errno == EINTR) )
-	{
-		NSLog(@"Interrupted, resuming wait.");
-	}
-	
-	// If the listen was successful create a session object	
-	if( fileDescriptor != -1 ) {		
-		
-		networkSession = [[NetworkSession alloc] initWithSocket:sock andDescriptor:fileDescriptor];
-		
-		struct hostent *hostptr = gethostbyaddr((char*)&(net_client.sin_addr.s_addr), len, AF_INET);
-		if( hostptr != nil ) {
-			hostnameString = [[NSString alloc] initWithCString:(*hostptr).h_name encoding:NSUTF8StringEncoding];
-		} else {
-			hostnameString = [[NSString alloc] initWithString:@"Unknown Client."];
-		}
-		NSLog(@"New connection successful, to %@ (fd: %d).", hostnameString, fileDescriptor);
-		
-		[networkSession setHostname:hostnameString];
-        [hostnameString release];
-		
-	} else {
-		NSLog(@"Connection attempt failed.");
-		error = true;
-		return nil;
-	}		
-	
-    [networkSession autorelease];
-	return networkSession;
+    do {
+         int fileDescriptor = accept(sock,
+                                     (struct sockaddr*)(&net_client), &len);
+        
+        // Catch errors and interruptions
+        if (fileDescriptor == -1) {
+            if (error == EINTR) {
+                NSLog(@"Interrupted, resuming wait.");              
+            } else {
+                NSLog(@"Connection attempt failed.");
+                error = true;
+                return nil;
+            }
+        }
+        
+        else {
+            networkSession = [[NetworkSession alloc] initWithSocket:sock
+                                                      andDescriptor:fileDescriptor];
+            
+            struct hostent *hostptr;
+            hostptr = gethostbyaddr((char*)&(net_client.sin_addr.s_addr),
+                                    len, AF_INET);
+
+            if( hostptr != nil ) {
+                hostnameString = [[NSString alloc] initWithCString:(*hostptr).h_name
+                                                          encoding:NSUTF8StringEncoding];
+            } else {
+                hostnameString = [[NSString alloc] initWithString:@"Unknown Client."];
+            }
+            
+            NSLog(@"New connection successful, to %@ (fd: %d).",
+                  hostnameString, fileDescriptor);
+            
+            [networkSession setHostname:hostnameString];
+            [hostnameString release];
+            
+            [networkSession autorelease];
+            return networkSession;
+        }
+    } while (!error);
+    
+    // Should never get here
+    return nil;
 }
 
 - (void)close
 {
     started = NO;
     close(sock);
-	sock = fileDescriptor = -1;
+	sock = -1;
 }
 
 - (bool)started

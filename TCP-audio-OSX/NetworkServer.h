@@ -18,7 +18,6 @@
 	int port;
     
 	int	sock;
-	int fileDescriptor;
     
 	id delegate;
 }
