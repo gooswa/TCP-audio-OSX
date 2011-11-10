@@ -28,10 +28,10 @@
     
 @end
 
-@interface AppDelegate : NSObject <NSApplicationDelegate,
-                                   NSComboBoxDataSource,
-                                   NSTableViewDataSource,
-                                   NSTableViewDelegate>
+@interface AppDelegate : NSObject //<NSApplicationDelegate,
+                                   //NSComboBoxDataSource,
+                                   //NSTableViewDataSource,
+                                   //NSTableViewDelegate>
 {
     IBOutlet NSComboBox         *source;
     IBOutlet NSComboBox         *sampleRate;
