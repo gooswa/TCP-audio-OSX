@@ -250,26 +250,44 @@ void handleInputBuffer(void *aqData,
     channels = inChannels;
 }
 
-- (void)startAudio
+- (uint32)deriveBufferSizeforQueue:(AudioQueueRef)queue
+                       description:(AudioStreamBasicDescription)desc
+                        andSeconds:(Float64)secs
+{
+    static const int maxBufferSize = 327680;
+    
+    int maxPacketSize = desc.mBytesPerPacket;
+    if (maxPacketSize == 0) {
+        UInt32 maxVBRPacketSize = sizeof(maxPacketSize);
+        AudioQueueGetProperty(queue, 
+                              kAudioConverterPropertyMaximumOutputPacketSize, 
+                              &maxPacketSize, &maxVBRPacketSize);
+    }
+    
+    Float64 numBytesForTime = desc.mSampleRate * maxPacketSize * secs;
+    return (uint32)(numBytesForTime < maxBufferSize) ? numBytesForTime : maxBufferSize;
+}
+
+- (bool)startAudio
 {
 	NSLog(@"Audio Start Request.");
 
     // Keep a self-referential pointer in recorderState
 	recorderState.audioSource = self;
 	
+    // Set the delegate
+    recorderState.delegate = delegate;
+    
 // Setup the desired parameters from the Audio Queue
 	recorderState.mDataFormat.mFormatID = kAudioFormatLinearPCM;
 	recorderState.mDataFormat.mSampleRate = sampleRate;
 	recorderState.mDataFormat.mChannelsPerFrame = channels;
-	recorderState.mDataFormat.mBitsPerChannel = 32;
-	recorderState.mDataFormat.mBytesPerPacket =
-    recorderState.mDataFormat.mBytesPerFrame =
-    recorderState.mDataFormat.mChannelsPerFrame * 4;    // 4-byte samples (32 bit)
+	recorderState.mDataFormat.mBitsPerChannel = 8 * sizeof(Float32);
+	recorderState.mDataFormat.mBytesPerPacket = channels * sizeof(Float32);
+    recorderState.mDataFormat.mBytesPerFrame  = channels * sizeof(Float32);
 	recorderState.mDataFormat.mFramesPerPacket = 1;
-	recorderState.mDataFormat.mFormatFlags = kLinearPCMFormatFlagIsFloat;
-    
-    // Set the delegate
-    recorderState.delegate = delegate;
+	recorderState.mDataFormat.mFormatFlags = kLinearPCMFormatFlagIsFloat |
+                                             kLinearPCMFormatFlagIsPacked;
     
 // Create the new Audio Queue
 	OSStatus result = AudioQueueNewInput(&recorderState.mDataFormat,
@@ -281,36 +299,56 @@ void handleInputBuffer(void *aqData,
 										 &recorderState.mQueue);
 	if (result != kAudioHardwareNoError) {
         NSLog(@"Unable to create new input audio queue.");
-        return;
+        return NO;
     }
     
 // Set the device for this audioQueue
     NSDictionary *deviceDict = [devices objectAtIndex:device];
     CFStringRef   deviceUID;
     deviceUID = (CFStringRef)[deviceDict objectForKey:audioSourceDeviceUIDKey];
-    uint32 propertySize = sizeof(CFStringRef);
+    UInt32 propertySize = sizeof(CFStringRef);
     result = AudioQueueSetProperty(recorderState.mQueue, 
                                    kAudioQueueProperty_CurrentDevice, 
                                    &deviceUID, propertySize);
     
     if (result != kAudioHardwareNoError) {
         NSLog(@"Unable to set audio queue device to %@", deviceUID);
-        return;
+        return NO;
     }
     
 	NSLog(@"Using audio device UID: %@\n", deviceUID);
 	
+    // Get the basic description through the API to check everything
+    propertySize = sizeof(recorderState.mDataFormat);
+    result = AudioQueueGetProperty(recorderState.mQueue, 
+                                   kAudioQueueProperty_StreamDescription, 
+                                   &recorderState.mDataFormat, 
+                                   &propertySize);
+    if (result != kAudioHardwareNoError) {
+        NSLog(@"Unable to get audio basic format");
+        return NO;
+    }
+    
+    // Get the proper buffer size
+    uint32 bufferSize = [self deriveBufferSizeforQueue:recorderState.mQueue
+                                           description:recorderState.mDataFormat
+                                            andSeconds:1.];
+    
     // Allocate buffer list, buffers and provide to audioQueue
     if (recorderState.mBuffers == nil) {
         recorderState.mBuffers = (AudioQueueBufferRef *)malloc(sizeof(AudioQueueBufferRef *) * NUM_BUFFERS);
         for( int i = 0; i < NUM_BUFFERS; i++ ) {
-            AudioQueueAllocateBuffer(recorderState.mQueue, FRAMES*channels*sizeof(Float32), &recorderState.mBuffers[i]);
-            AudioQueueEnqueueBuffer (recorderState.mQueue, recorderState.mBuffers[i], 0, NULL);
+            AudioQueueAllocateBuffer(recorderState.mQueue,
+                                     bufferSize,
+                                     &recorderState.mBuffers[i]);
+            AudioQueueEnqueueBuffer (recorderState.mQueue,
+                                     recorderState.mBuffers[i], 0, NULL);
         }
     }
     
     AudioQueueStart(recorderState.mQueue, NULL);		
     running = true;
+    return YES;
 }
 
 - (void)stopAudio

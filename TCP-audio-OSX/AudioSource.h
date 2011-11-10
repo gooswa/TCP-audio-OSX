@@ -77,7 +77,7 @@ struct AQRecorderState {
 - (void)setSampleRate:(float)sampleRate;
 - (void)setChannels:(int)channels;
 
-- (void)startAudio;
+- (bool)startAudio;
 - (void)stopAudio;
 
 @end
