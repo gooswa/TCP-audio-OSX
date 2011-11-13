@@ -228,6 +228,8 @@ void handleInputBuffer(void *aqData,
     
     // Release the structure containing the device data
     [devices release];
+	
+	[super dealloc];
 }
 
 //- (void)setDelegate:(id <audioSourceDelegate>)inDelegate
@@ -257,11 +259,11 @@ void handleInputBuffer(void *aqData,
 
 - (UInt32)deriveBufferSizeforQueue:(AudioQueueRef)queue
                        description:(AudioStreamBasicDescription)desc
-                        andSeconds:(Float64)secs
+                        andSeconds:(Float32)secs
 {
-    static const int maxBufferSize = 327680;
+    static const UInt32 maxBufferSize = 327680;
     
-    int maxPacketSize = desc.mBytesPerPacket;
+    UInt32 maxPacketSize = desc.mBytesPerPacket;
     if (maxPacketSize == 0) {
         UInt32 maxVBRPacketSize = sizeof(maxPacketSize);
         AudioQueueGetProperty(queue, 
@@ -269,7 +271,7 @@ void handleInputBuffer(void *aqData,
                               &maxPacketSize, &maxVBRPacketSize);
     }
     
-    Float64 numBytesForTime = desc.mSampleRate * maxPacketSize * secs;
+    Float32 numBytesForTime = desc.mSampleRate * maxPacketSize * secs;
     return (UInt32)(numBytesForTime < maxBufferSize) ? numBytesForTime : maxBufferSize;
 }
 
@@ -292,8 +294,7 @@ void handleInputBuffer(void *aqData,
     recorderState.mDataFormat.mBytesPerFrame  = channels * sizeof(Float32);
 	recorderState.mDataFormat.mFramesPerPacket = 1;
 	recorderState.mDataFormat.mFormatFlags = kLinearPCMFormatFlagIsFloat |
-                                             kLinearPCMFormatFlagIsPacked;
-    
+											 kLinearPCMFormatFlagIsPacked;    
 // Create the new Audio Queue
 	OSStatus result = AudioQueueNewInput(&recorderState.mDataFormat,
 										 handleInputBuffer,
@@ -357,10 +358,15 @@ void handleInputBuffer(void *aqData,
     recorderState.mDataFormat = desc;
     
     // Get the proper buffer size
+	UInt32 bytesPerSecond = recorderState.mDataFormat.mBytesPerPacket *
+							recorderState.mDataFormat.mSampleRate;
     UInt32 bufferSize = [self deriveBufferSizeforQueue:recorderState.mQueue
                                            description:recorderState.mDataFormat
-                                            andSeconds:0.5];
+                                            andSeconds:0.1];
     
+	NSLog(@"Using %u byte buffers, %f seconds.", (unsigned int)bufferSize,
+		  (float)bufferSize / (float)bytesPerSecond);
+	
     // Allocate buffer list, buffers and provide to audioQueue
     for( int i = 0; i < kNumberOfBuffers; i++ ) {
         AudioQueueAllocateBuffer(recorderState.mQueue,
