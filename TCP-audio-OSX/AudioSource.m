@@ -217,7 +217,16 @@ void handleInputBuffer(void *aqData,
 
 - (void)dealloc
 {
-    free(recorderState.mBuffers);
+    // Free the buffers (hopefully they're all dequeued)
+    for (int i = 0; i < kNumberOfBuffers; i++) {
+        AudioQueueFreeBuffer(recorderState.mQueue, 
+                             recorderState.mBuffers[i]);
+    }
+    
+    // Dispose of the audio queue
+    AudioQueueDispose(recorderState.mQueue, YES);
+    
+    // Release the structure containing the device data
     [devices release];
 }
 
@@ -353,14 +362,12 @@ void handleInputBuffer(void *aqData,
                                             andSeconds:0.5];
     
     // Allocate buffer list, buffers and provide to audioQueue
-    if (recorderState.mBuffers == nil) {
-        for( int i = 0; i < kNumberOfBuffers; i++ ) {
-            AudioQueueAllocateBuffer(recorderState.mQueue,
-                                     bufferSize,
-                                     &recorderState.mBuffers[i]);
-            AudioQueueEnqueueBuffer (recorderState.mQueue,
-                                     recorderState.mBuffers[i], 0, NULL);
-        }
+    for( int i = 0; i < kNumberOfBuffers; i++ ) {
+        AudioQueueAllocateBuffer(recorderState.mQueue,
+                                 bufferSize,
+                                 &recorderState.mBuffers[i]);
+        AudioQueueEnqueueBuffer (recorderState.mQueue,
+                                 recorderState.mBuffers[i], 0, NULL);
     }
     
     result = AudioQueueStart(recorderState.mQueue, NULL);
