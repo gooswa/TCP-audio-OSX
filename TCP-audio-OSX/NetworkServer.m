@@ -86,24 +86,23 @@
 
 	// Listen for an incoming connection indefinitely 
 	while( true ) {
-        @autoreleasepool {
-            networkSession = [self accept];
-            
-            if( networkSession != nil ) {
-                [delegate newNetworkSession: networkSession];			
-            } else {
-                if (!started || error) {
-                    NSLog(@"Server shutdown or error, exiting loop.");
-                    [delegate serverError];
+		NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+		networkSession = [self accept];
+		
+		if( networkSession != nil ) {
+			[delegate newNetworkSession: networkSession];			
+		} else {
+			if (!started) {
+				NSLog(@"Server shutdown, exiting loop.");
+				return;
+			}
+			
+			NSLog(@"Error listening, retrying.");
+		}
+		
+		networkSession = nil;
 
-                    return;
-                }
-                
-                NSLog(@"Error listening, retrying.");
-            }
-            
-            networkSession = nil;
-        }
+		[pool drain];
 	}
 }
 
