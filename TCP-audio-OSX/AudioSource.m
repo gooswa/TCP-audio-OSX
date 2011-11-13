@@ -32,17 +32,17 @@ void handleInputBuffer(void *aqData,
     
 	struct AQRecorderState *recorderState = (struct AQRecorderState *)aqData;
 	
-	if( [recorderState->audioSource running] ) {
-        id delegate = recorderState->delegate;
-        NSData *data = [NSData dataWithBytes:inBuffer->mAudioData
-                                       length:inBuffer->mAudioDataByteSize];
-		[delegate performSelectorOnMainThread:@selector(audioData:)
-                                   withObject:data
-                                waitUntilDone:NO]; 
-	}
+    id delegate = recorderState->delegate;
+    NSData *data = [NSData dataWithBytes:inBuffer->mAudioData
+                                   length:inBuffer->mAudioDataByteSize];
+    [delegate performSelectorOnMainThread:@selector(audioData:)
+                               withObject:data
+                            waitUntilDone:NO]; 
 
-    // Return the buffer to the audio queue
-	AudioQueueEnqueueBuffer(recorderState->mQueue, inBuffer, 0, 0);
+    if( [recorderState->audioSource running] ) {
+        // Return the buffer to the audio queue
+        AudioQueueEnqueueBuffer(recorderState->mQueue, inBuffer, 0, 0);
+    }
     
     [pool drain];
 }
@@ -62,7 +62,6 @@ void handleInputBuffer(void *aqData,
 	}
 	
     delegate = nil;
-    recorderState.mBuffers = nil;
     
     // Variables used for each of the functions
     UInt32 propertySize = 0;
@@ -314,30 +313,48 @@ void handleInputBuffer(void *aqData,
     }
     
     // Get the basic description through the API to check everything
-    propertySize = sizeof(recorderState.mDataFormat);
+    AudioStreamBasicDescription desc;
+    propertySize = sizeof(desc);
     result = AudioQueueGetProperty(recorderState.mQueue, 
-                                   kAudioQueueProperty_StreamDescription, 
-                                   &recorderState.mDataFormat, 
-                                   &propertySize);
+                                   kAudioConverterCurrentOutputStreamDescription, 
+                                   &desc, &propertySize);
+
     if (result != kAudioHardwareNoError) {
         NSLog(@"Unable to get audio basic format");
         return NO;
     } else {
         NSLog(@"Using audio device UID: %@\n", deviceUID);
-        NSLog(@"%f samples/second", recorderState.mDataFormat.mSampleRate);
-        NSLog(@"%u bits/sample", (unsigned int)recorderState.mDataFormat.mBitsPerChannel);
-        NSLog(@"%u channels", (unsigned int)recorderState.mDataFormat.mChannelsPerFrame);
+        NSLog(@"%f samples/second", desc.mSampleRate);
+        NSLog(@"%u bits/sample", (unsigned int)desc.mBitsPerChannel);
+        NSLog(@"%u channels", (unsigned int)desc.mChannelsPerFrame);
+
+        // Big endian requested
+        if (desc.mFormatFlags & kAudioFormatFlagIsBigEndian) {
+            if (kAudioFormatFlagsNativeEndian) {
+                NSLog(@"Big endian values on big endian system");
+            } else {
+                NSLog(@"Big endian values on little endian system");
+            }
+        } else {
+            if (kAudioFormatFlagsNativeEndian) {
+                NSLog(@"Little endian values on big endian system");
+            } else {
+                NSLog(@"Little endian values on little endian system");
+            }
+        }
     }
+    
+    // Copy this new basic description to the structure
+    recorderState.mDataFormat = desc;
     
     // Get the proper buffer size
     UInt32 bufferSize = [self deriveBufferSizeforQueue:recorderState.mQueue
                                            description:recorderState.mDataFormat
-                                            andSeconds:1.];
+                                            andSeconds:0.5];
     
     // Allocate buffer list, buffers and provide to audioQueue
     if (recorderState.mBuffers == nil) {
-        recorderState.mBuffers = (AudioQueueBufferRef *)malloc(sizeof(AudioQueueBufferRef *) * NUM_BUFFERS);
-        for( int i = 0; i < NUM_BUFFERS; i++ ) {
+        for( int i = 0; i < kNumberOfBuffers; i++ ) {
             AudioQueueAllocateBuffer(recorderState.mQueue,
                                      bufferSize,
                                      &recorderState.mBuffers[i]);
@@ -346,8 +363,14 @@ void handleInputBuffer(void *aqData,
         }
     }
     
-    AudioQueueStart(recorderState.mQueue, NULL);		
-    running = true;
+    result = AudioQueueStart(recorderState.mQueue, NULL);
+    if (result != kAudioHardwareNoError) {
+        NSLog(@"Unable to start audio source!");
+        return NO;
+    } else {
+        running = true;        
+    }
+    
     return YES;
 }
 

@@ -25,6 +25,8 @@ extern NSString *audioSourceDeviceUIDKey;
 @class AppDelegate;
 @class AudioSource;
 
+#define kNumberOfBuffers 3
+
 void handleInputBuffer(void *aqData,
                        AudioQueueRef audioQueue,
                        AudioQueueBufferRef inBuffer,
@@ -35,7 +37,7 @@ void handleInputBuffer(void *aqData,
 struct AQRecorderState {	
     AudioStreamBasicDescription  mDataFormat;
     AudioQueueRef                mQueue;
-    AudioQueueBufferRef         *mBuffers;
+    AudioQueueBufferRef          mBuffers[kNumberOfBuffers];
     UInt32                       bufferByteSize;
     SInt64                       mCurrentPacket;
     id                           delegate;
@@ -72,7 +74,6 @@ struct AQRecorderState {
 - (id)init;
 
 - (void)setDelegate:(id)delegate;
-
 - (void)setDevice:(int)device;
 - (void)setSampleRate:(float)sampleRate;
 - (void)setChannels:(int)channels;
