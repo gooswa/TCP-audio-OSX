@@ -224,7 +224,7 @@ NSString *sessionOperationQueueKey = @"sessionOperationQueue";
     }
 }
 
-- (void)audioBytes:(void *)bytes size:(NSUInteger)size
+- (void)audioData:(NSData *)data
 {
     // The audio data should be 32-bit floats with the channels interleaved.
     // This is the format we want to send on the network, which means that we
@@ -232,12 +232,7 @@ NSString *sessionOperationQueueKey = @"sessionOperationQueue";
     // operation can block if the channel to the remote host isn't capable of
     // maintaining the data rate.  Therefore, we need send it asynchronously
     // and have a mechanisim to drop audio frames if it comes to that.
-    
-    // Create an NSData to be used in the operations
-    // This copies the bytes, becuase the caller needs to reuse the buffer.
-    NSData *data = [[NSData alloc] initWithBytes:bytes
-                                          length:size];
-    
+
     for (NSDictionary *session in networkSessions) {
         NSOperationQueue *queue;
         queue = [session objectForKey:sessionOperationQueueKey];
@@ -257,7 +252,6 @@ NSString *sessionOperationQueueKey = @"sessionOperationQueue";
   //      }
     }
     
-    [data release];
     
     return;
 }

@@ -33,7 +33,7 @@
                                    //NSTableViewDataSource,
                                    //NSTableViewDelegate>
 {
-    IBOutlet NSWindow           *window;
+	IBOutlet NSWindow			*window;
     IBOutlet NSComboBox         *source;
     IBOutlet NSComboBox         *sampleRate;
     IBOutlet NSComboBox         *channels;
@@ -60,6 +60,6 @@
 - (void)sessionTerminated:(NetworkSession *)session;
 
 // Audio source events
-- (void)audioBytes:(void *)data size:(NSUInteger)size;
+- (void)audioData:(NSData *)data;
 
 @end
