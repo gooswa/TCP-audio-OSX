@@ -324,14 +324,14 @@
 								<object class="NSComboTableView" key="NSTableView" id="736859870">
 									<reference key="NSNextResponder"/>
 									<int key="NSvFlags">274</int>
-									<string key="NSFrameSize">{15, 0}</string>
+									<string key="NSFrameSize">{13, 0}</string>
 									<reference key="NSSuperview"/>
 									<reference key="NSWindow"/>
 									<string key="NSReuseIdentifierKey">_NS:738</string>
 									<bool key="NSEnabled">YES</bool>
 									<array class="NSMutableArray" key="NSTableColumns">
 										<object class="NSTableColumn">
-											<double key="NSWidth">12</double>
+											<double key="NSWidth">10</double>
 											<double key="NSMinWidth">10</double>
 											<double key="NSMaxWidth">1000</double>
 											<object class="NSTableHeaderCell" key="NSHeaderCell">
@@ -385,7 +385,7 @@
 									</object>
 									<double key="NSRowHeight">19</double>
 									<string key="NSAction">tableViewAction:</string>
-									<int key="NSTvFlags">-767524864</int>
+									<int key="NSTvFlags">-765427712</int>
 									<reference key="NSDelegate" ref="348557534"/>
 									<reference key="NSDataSource" ref="348557534"/>
 									<reference key="NSTarget" ref="348557534"/>
@@ -423,14 +423,14 @@
 								<object class="NSComboTableView" key="NSTableView" id="653194098">
 									<reference key="NSNextResponder"/>
 									<int key="NSvFlags">274</int>
-									<string key="NSFrameSize">{15, 0}</string>
+									<string key="NSFrameSize">{13, 0}</string>
 									<reference key="NSSuperview"/>
 									<reference key="NSWindow"/>
 									<string key="NSReuseIdentifierKey">_NS:738</string>
 									<bool key="NSEnabled">YES</bool>
 									<array class="NSMutableArray" key="NSTableColumns">
 										<object class="NSTableColumn">
-											<double key="NSWidth">12</double>
+											<double key="NSWidth">10</double>
 											<double key="NSMinWidth">10</double>
 											<double key="NSMaxWidth">1000</double>
 											<object class="NSTableHeaderCell" key="NSHeaderCell">
@@ -464,7 +464,7 @@
 									<reference key="NSGridColor" ref="334536166"/>
 									<double key="NSRowHeight">19</double>
 									<string key="NSAction">tableViewAction:</string>
-									<int key="NSTvFlags">-767524864</int>
+									<int key="NSTvFlags">-765427712</int>
 									<reference key="NSDelegate" ref="831247821"/>
 									<reference key="NSDataSource" ref="831247821"/>
 									<reference key="NSTarget" ref="831247821"/>
@@ -595,11 +595,9 @@
 												<reference key="NSTableView" ref="360004726"/>
 											</object>
 											<object class="_NSCornerView" key="NSCornerView" id="830637610">
-												<reference key="NSNextResponder" ref="288424242"/>
+												<nil key="NSNextResponder"/>
 												<int key="NSvFlags">-2147483392</int>
 												<string key="NSFrame">{{224, 0}, {16, 17}}</string>
-												<reference key="NSSuperview" ref="288424242"/>
-												<reference key="NSWindow"/>
 												<reference key="NSNextKeyView" ref="1035669607"/>
 												<string key="NSReuseIdentifierKey">_NS:1833</string>
 											</object>
@@ -741,7 +739,6 @@
 									<reference key="NSBGColor" ref="835817638"/>
 									<int key="NScvFlags">4</int>
 								</object>
-								<reference ref="830637610"/>
 							</array>
 							<string key="NSFrame">{{20, 20}, {440, 255}}</string>
 							<reference key="NSSuperview" ref="439893737"/>
@@ -753,7 +750,6 @@
 							<reference key="NSHScroller" ref="200322563"/>
 							<reference key="NSContentView" ref="1035669607"/>
 							<reference key="NSHeaderClipView" ref="1057327612"/>
-							<reference key="NSCornerView" ref="830637610"/>
 							<bytes key="NSScrollAmts">QSAAAEEgAABBmAAAQZgAAA</bytes>
 						</object>
 						<object class="NSButton" id="1020622075">
@@ -817,14 +813,14 @@
 								<object class="NSComboTableView" key="NSTableView" id="661988716">
 									<reference key="NSNextResponder"/>
 									<int key="NSvFlags">274</int>
-									<string key="NSFrameSize">{15, 0}</string>
+									<string key="NSFrameSize">{13, 0}</string>
 									<reference key="NSSuperview"/>
 									<reference key="NSWindow"/>
 									<string key="NSReuseIdentifierKey">_NS:738</string>
 									<bool key="NSEnabled">YES</bool>
 									<array class="NSMutableArray" key="NSTableColumns">
 										<object class="NSTableColumn">
-											<double key="NSWidth">12</double>
+											<double key="NSWidth">10</double>
 											<double key="NSMinWidth">10</double>
 											<double key="NSMaxWidth">1000</double>
 											<object class="NSTableHeaderCell" key="NSHeaderCell">
@@ -858,7 +854,7 @@
 									<reference key="NSGridColor" ref="334536166"/>
 									<double key="NSRowHeight">19</double>
 									<string key="NSAction">tableViewAction:</string>
-									<int key="NSTvFlags">-767524864</int>
+									<int key="NSTvFlags">-765427712</int>
 									<reference key="NSDelegate" ref="413809764"/>
 									<reference key="NSDataSource" ref="413809764"/>
 									<reference key="NSTarget" ref="413809764"/>
@@ -1498,14 +1494,7 @@
 				<string key="549.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
 				<string key="550.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
 				<string key="551.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
-				<object class="NSMutableDictionary" key="553.IBAttributePlaceholdersKey">
-					<string key="NS.key.0">ToolTip</string>
-					<object class="IBToolTipAttribute" key="NS.object.0">
-						<string key="name">ToolTip</string>
-						<reference key="object" ref="901011945"/>
-						<string key="toolTip">Hostname of the connected host</string>
-					</object>
-				</object>
+				<dictionary class="NSMutableDictionary" key="553.IBAttributePlaceholdersKey"/>
 				<string key="553.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
 				<dictionary class="NSMutableDictionary" key="556.IBAttributePlaceholdersKey"/>
 				<string key="556.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
