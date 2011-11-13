@@ -32,18 +32,15 @@ void handleInputBuffer(void *aqData,
     
 	struct AQRecorderState *recorderState = (struct AQRecorderState *)aqData;
 	
-//	if( inNumPackets == 0 && recorderState->mDataFormat.mBytesPerPacket != 0 )
-//		inNumPackets = inBuffer->mAudioDataByteSize / recorderState->mDataFormat.mBytesPerPacket;
-	
-	if( [recorderState->audioSource running] ) {		
-		[recorderState->delegate audioBytes:inBuffer->mAudioData
-                                       size:inBuffer->mAudioDataByteSize];
+	if( [recorderState->audioSource running] ) {
+        id delegate = recorderState->delegate;
+        NSData *data = [NSData dataWithBytes:inBuffer->mAudioData
+                                       length:inBuffer->mAudioDataByteSize];
+		[delegate performSelectorOnMainThread:@selector(audioData:)
+                                   withObject:data
+                                waitUntilDone:NO]; 
 	}
-    
-//    else {
-//		NSLog(@"Discarded AudioQueue buffer (network connection closed)");
-//	}
-    
+
     // Return the buffer to the audio queue
 	AudioQueueEnqueueBuffer(recorderState->mQueue, inBuffer, 0, 0);
     
@@ -68,7 +65,7 @@ void handleInputBuffer(void *aqData,
     recorderState.mBuffers = nil;
     
     // Variables used for each of the functions
-    uint32 propertySize = 0;
+    UInt32 propertySize = 0;
     Boolean writable = NO;
     AudioObjectPropertyAddress property;
     
@@ -250,7 +247,7 @@ void handleInputBuffer(void *aqData,
     channels = inChannels;
 }
 
-- (uint32)deriveBufferSizeforQueue:(AudioQueueRef)queue
+- (UInt32)deriveBufferSizeforQueue:(AudioQueueRef)queue
                        description:(AudioStreamBasicDescription)desc
                         andSeconds:(Float64)secs
 {
@@ -265,7 +262,7 @@ void handleInputBuffer(void *aqData,
     }
     
     Float64 numBytesForTime = desc.mSampleRate * maxPacketSize * secs;
-    return (uint32)(numBytesForTime < maxBufferSize) ? numBytesForTime : maxBufferSize;
+    return (UInt32)(numBytesForTime < maxBufferSize) ? numBytesForTime : maxBufferSize;
 }
 
 - (bool)startAudio
@@ -316,8 +313,6 @@ void handleInputBuffer(void *aqData,
         return NO;
     }
     
-	NSLog(@"Using audio device UID: %@\n", deviceUID);
-	
     // Get the basic description through the API to check everything
     propertySize = sizeof(recorderState.mDataFormat);
     result = AudioQueueGetProperty(recorderState.mQueue, 
@@ -327,10 +322,15 @@ void handleInputBuffer(void *aqData,
     if (result != kAudioHardwareNoError) {
         NSLog(@"Unable to get audio basic format");
         return NO;
+    } else {
+        NSLog(@"Using audio device UID: %@\n", deviceUID);
+        NSLog(@"%f samples/second", recorderState.mDataFormat.mSampleRate);
+        NSLog(@"%u bits/sample", (unsigned int)recorderState.mDataFormat.mBitsPerChannel);
+        NSLog(@"%u channels", (unsigned int)recorderState.mDataFormat.mChannelsPerFrame);
     }
     
     // Get the proper buffer size
-    uint32 bufferSize = [self deriveBufferSizeforQueue:recorderState.mQueue
+    UInt32 bufferSize = [self deriveBufferSizeforQueue:recorderState.mQueue
                                            description:recorderState.mDataFormat
                                             andSeconds:1.];
     
