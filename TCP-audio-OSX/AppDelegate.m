@@ -299,19 +299,20 @@ NSString *sessionOperationQueueKey = @"sessionOperationQueue";
 
 - (IBAction)toggleServer:(id)sender {
     if (![networkServer started]) {
-        // Change the label of the button
-        [startStopButton setTitle:@"Stop"];
-        [window setTitle:@"TCP Audio - Running"];
-        
         // Open the server port
         [networkServer openWithPort:NETWORK_PORT];
         
         // Begin processing new connections
         [networkServer acceptInBackground];
 
+        // Detect server errors
         if ([networkServer started] == NO) {
             return;
         }
+
+        // Change the label of the button
+        [startStopButton setTitle:@"Stop"];
+        [window setTitle:@"TCP Audio - Running"];
         
         // Disable audio configurations
         [source     setEnabled:NO];
