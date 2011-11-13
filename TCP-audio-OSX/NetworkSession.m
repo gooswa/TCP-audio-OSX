@@ -117,25 +117,25 @@ error:
 		}
 	}
 	
-	do {
-		dataLength = htonl( dataLength );
-		retval = send(fileDescriptor, &dataLength, sizeof(UInt32), 0);
-		if( retval == -1 ) {
-			perror("Writing bytes to the network");
-			return NO;
-		}
+//	do {
+//		dataLength = htonl( dataLength );
+//		retval = send(fileDescriptor, &dataLength, sizeof(UInt32), 0);
+//		if( retval == -1 ) {
+//			perror("Writing bytes to the network");
+//			return NO;
+//		}
 		
 		retval = send(fileDescriptor, [theData bytes], [theData length], 0);
-		if( retval == -1 ) {
-			perror("Writing bytes to the network");
+		if( retval != [theData length]) {
+			NSLog(@"Incomplete write or error on send! (%d)", (int)retval);
 			return NO;
 		}
 		
-		localWritten += retval + sizeof(int);
+//		localWritten += retval + sizeof(int);
 		
-	} while( localWritten == [theData length] );
+//	} while( localWritten == [theData length] );
 	
-	written += localWritten;
+//	written += localWritten;
 	
 	return YES;
 }
