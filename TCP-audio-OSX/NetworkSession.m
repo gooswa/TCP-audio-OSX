@@ -101,14 +101,14 @@ error:
 {
 	size_t retval;
 	size_t localWritten = 0;
-	uint32_t dataLength;
+	UInt32 dataLength;
     
     if ([theData length] > UINT32_MAX) {
         NSLog(@"Contents of \"theData\" larger than what can fit in 32 bits!");
         exit(EXIT_FAILURE);
     }
     
-    dataLength = (uint32_t)[theData length];
+    dataLength = (UInt32)[theData length];
 	
 	if( !connected ) {
 		if( ![self connect] ) {
@@ -119,7 +119,7 @@ error:
 	
 	do {
 		dataLength = htonl( dataLength );
-		retval = send(fileDescriptor, &dataLength, sizeof(uint32_t), 0);
+		retval = send(fileDescriptor, &dataLength, sizeof(UInt32), 0);
 		if( retval == -1 ) {
 			perror("Writing bytes to the network");
 			return NO;
