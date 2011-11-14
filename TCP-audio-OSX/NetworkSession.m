@@ -115,26 +115,38 @@ error:
 		}
 	}
 	
-//	do {
-//		dataLength = htonl( dataLength );
-//		retval = send(fileDescriptor, &dataLength, sizeof(UInt32), 0);
-//		if( retval == -1 ) {
-//			perror("Writing bytes to the network");
-//			return NO;
-//		}
+    
+	do {
+        // Send the remaining data
+        // We send the data plus the offest of data alread sent (starting at 0)
+        // And the length of the remaining data to be sent (starting with total)
+		retval = send(fileDescriptor,
+                      bytes + localWritten,
+                      dataLength - localWritten, 0);
+
+		// Evaluate recoverable errors
+        if (retval < 0) {
+            if (errno != EINTR  &&
+                errno != EAGAIN &&
+                errno != ENOBUFS) {
+                NSLog(@"Unrecoverable error sending data to session %s", strerror(errno));
+                [theData release];
+                return NO;
+            }
+            
+            // This error indicates a transient condition, so let's wait
+            // for some small period instead of thrashing. (.001 seconds)
+            if (errno == ENOBUFS) {
+                NSLog(@"Network send ran out of buffers, retrying.");
+                usleep(1000);
+            }
+        }
 		
-		retval = send(fileDescriptor, [theData bytes], [theData length], 0);
-		if( retval != [theData length]) {
-			NSLog(@"Incomplete write or error on send! (%d)", (int)retval);
-			return NO;
-		}
+		localWritten += retval;
 		
-//		localWritten += retval + sizeof(int);
-		
-//	} while( localWritten == [theData length] );
-	
-//	written += localWritten;
-	
+	} while( localWritten < dataLength );
+
+	[theData release];
 	return YES;
 }
 
