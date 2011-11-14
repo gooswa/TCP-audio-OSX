@@ -45,12 +45,17 @@ NSString *sessionOperationQueueKey = @"sessionOperationQueue";
         [notify performSelectorOnMainThread:selector
                                  withObject:session
                               waitUntilDone:NO];
-    }
-    
-    [session release];
-    [data release];
+    }    
     
     [pool drain];
+}
+
+- (void)dealloc
+{
+    [session release];
+    [data release];
+
+    [super dealloc];
 }
 
 @end
@@ -196,7 +201,7 @@ NSString *sessionOperationQueueKey = @"sessionOperationQueue";
     [networkSessions removeObject:session];
     
     if ([networkSessions count] == 0) {
-        [audioSource stopAudio];
+//      [audioSource stopAudio];
         [progressIndicator stopAnimation:self];
     }
     
