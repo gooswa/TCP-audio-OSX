@@ -99,44 +99,54 @@ error:
 
 - (bool)sendData:(NSData*)theData
 {
-	size_t retval;
-	size_t localWritten = 0;
-	UInt32 dataLength;
+	ssize_t retval;
+	NSInteger localWritten = 0;
+	NSInteger dataLength;
     
-    if ([theData length] > UINT32_MAX) {
-        NSLog(@"Contents of \"theData\" larger than what can fit in 32 bits!");
-        exit(EXIT_FAILURE);
-    }
-    
-    dataLength = (UInt32)[theData length];
+    [theData retain];
+    const void *bytes = [theData bytes];
+    dataLength  = [theData length];
 	
 	if( !connected ) {
 		if( ![self connect] ) {
 			perror("Unable to send, not connected and unable to connect");
+            [theData release];
 			return NO;
 		}
 	}
 	
+    
 	do {
-		dataLength = htonl( dataLength );
-		retval = send(fileDescriptor, &dataLength, sizeof(UInt32), 0);
-		if( retval == -1 ) {
-			perror("Writing bytes to the network");
-			return NO;
-		}
+        // Send the remaining data
+        // We send the data plus the offest of data alread sent (starting at 0)
+        // And the length of the remaining data to be sent (starting with total)
+		retval = send(fileDescriptor,
+                      bytes + localWritten,
+                      dataLength - localWritten, 0);
+
+		// Evaluate recoverable errors
+        if (retval < 0) {
+            if (errno != EINTR  &&
+                errno != EAGAIN &&
+                errno != ENOBUFS) {
+                NSLog(@"Unrecoverable error sending data to session %s", strerror(errno));
+                [theData release];
+                return NO;
+            }
+            
+            // This error indicates a transient condition, so let's wait
+            // for some small period instead of thrashing. (.001 seconds)
+            if (errno == ENOBUFS) {
+                NSLog(@"Network send ran out of buffers, retrying.");
+                usleep(1000);
+            }
+        }
 		
-		retval = send(fileDescriptor, [theData bytes], [theData length], 0);
-		if( retval == -1 ) {
-			perror("Writing bytes to the network");
-			return NO;
-		}
+		localWritten += retval;
 		
-		localWritten += retval + sizeof(int);
-		
-	} while( localWritten == [theData length] );
-	
-	written += localWritten;
-	
+	} while( localWritten < dataLength );
+
+	[theData release];
 	return YES;
 }
 
