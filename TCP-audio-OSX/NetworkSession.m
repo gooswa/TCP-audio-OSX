@@ -99,20 +99,18 @@ error:
 
 - (bool)sendData:(NSData*)theData
 {
-	size_t retval;
-	size_t localWritten = 0;
-	UInt32 dataLength;
+	ssize_t retval;
+	NSInteger localWritten = 0;
+	NSInteger dataLength;
     
-    if ([theData length] > UINT32_MAX) {
-        NSLog(@"Contents of \"theData\" larger than what can fit in 32 bits!");
-        exit(EXIT_FAILURE);
-    }
-    
-    dataLength = (UInt32)[theData length];
+    [theData retain];
+    const void *bytes = [theData bytes];
+    dataLength  = [theData length];
 	
 	if( !connected ) {
 		if( ![self connect] ) {
 			perror("Unable to send, not connected and unable to connect");
+            [theData release];
 			return NO;
 		}
 	}
