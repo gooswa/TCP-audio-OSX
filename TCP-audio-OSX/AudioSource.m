@@ -208,6 +208,33 @@ void handleInputBuffer(void *aqData,
         // Add this new device dict to the array and release it
         [devices addObject:deviceDict];
         [deviceDict release];
+        
+    // Get the preferred channel layout
+//        AudioDeviceGetPropertyInfo(deviceIDs[i], 0, YES, 
+//                                   kAudioDevicePropertyPreferredChannelLayout, 
+//                                   &propertySize, &writable);
+//        AudioChannelLayout *layout;
+//        layout = (AudioChannelLayout *)malloc(propertySize);
+//        AudioDeviceGetProperty(deviceIDs[i], 0, YES, 
+//                               kAudioDevicePropertyPreferredChannelLayout, 
+//                               &propertySize, layout);
+//        NSLog(@"Audio channel layout tag: 0x%x", (unsigned int)layout->mChannelLayoutTag);
+//        if (layout->mChannelLayoutTag == kAudioChannelLayoutTag_UseChannelBitmap) {
+//            NSLog(@"Channel format bitmap: 0x%x", (unsigned int)layout->mChannelBitmap);
+//        }
+//        for (int i = 0; i < layout->mNumberChannelDescriptions; i++) {
+//            AudioChannelLabel label = layout->mChannelDescriptions[i].mChannelLabel;
+//            // Is this a discrete labeled channel?
+//            if (label == kAudioChannelLabel_Unknown) {
+//                NSLog(@"Channel %d's type is unknown", i);
+//            } else if (label | (1 << 16)) {
+//                NSLog(@"Channel %d is a numbered discrete channel (%d).",
+//                      i, (unsigned int)(label & (~(1 << 16))));
+//            } else {
+//                NSLog(@"Channel %d is channel label %u (see \"Audio Channel Label Constants\".",
+//                      i, (unsigned int)label);
+//            }
+//        }
     }
     
     free(deviceIDs);
@@ -297,11 +324,8 @@ void handleInputBuffer(void *aqData,
 											 kLinearPCMFormatFlagIsPacked;    
 // Create the new Audio Queue
 	OSStatus result = AudioQueueNewInput(&recorderState.mDataFormat,
-										 handleInputBuffer,
-                                         &recorderState,
-										 NULL,
-                                         kCFRunLoopCommonModes,
-                                         0,
+										 handleInputBuffer, &recorderState,
+										 NULL, kCFRunLoopCommonModes, 0,
 										 &recorderState.mQueue);
 	if (result != kAudioHardwareNoError) {
         NSLog(@"Unable to create new input audio queue.");
@@ -320,6 +344,37 @@ void handleInputBuffer(void *aqData,
     if (result != kAudioHardwareNoError) {
         NSLog(@"Unable to set audio queue device to %@", deviceUID);
         return NO;
+    }
+
+    // Create a channel layout appropriate for our needs
+    // we don't care about stereo or surround sound stuff
+    AudioChannelLayout *layout;
+    propertySize = sizeof(AudioChannelLayout) + 
+                   sizeof(AudioChannelDescription) * channels;
+    layout = (AudioChannelLayout *)malloc(propertySize);
+    layout->mChannelLayoutTag = kAudioChannelLayoutTag_UseChannelBitmap;
+    layout->mNumberChannelDescriptions = channels;
+    UInt32 bitmap = 0;
+    for (int i = 0; i < channels; i++) {
+        bitmap = (bitmap << 1) | 1;
+        
+        AudioChannelDescription *channel = &layout->mChannelDescriptions[i];
+        channel->mChannelLabel = kAudioChannelLabel_Unknown;
+        
+        // This is really jibberish.  I don't know if it's even necessary.
+        channel->mChannelFlags = kAudioChannelFlags_SphericalCoordinates;
+        channel->mCoordinates[kAudioChannelCoordinates_Elevation] = 1;
+        channel->mCoordinates[kAudioChannelCoordinates_Distance]  = 1;
+        channel->mCoordinates[kAudioChannelCoordinates_Azimuth]   = i * (360. / channels);
+    }
+    layout->mChannelBitmap = bitmap;
+    
+    // Set the layout we just made as the layout for our audio source
+    result = AudioQueueSetProperty(recorderState.mQueue, 
+                                   kAudioQueueProperty_ChannelLayout, 
+                                   layout, propertySize);
+    if (result != kAudioHardwareNoError) {
+        NSLog(@"Unable to set the channel layout, may be O.K.");
     }
     
     // Get the basic description through the API to check everything
