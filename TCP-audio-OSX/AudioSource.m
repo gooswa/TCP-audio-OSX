@@ -349,17 +349,18 @@ void handleInputBuffer(void *aqData,
     // Create a channel layout appropriate for our needs
     // we don't care about stereo or surround sound stuff
     AudioChannelLayout *layout;
+    // The AudioChannelLayout struct includes 1 channel, so we don't need to add it
     propertySize = sizeof(AudioChannelLayout) + 
-                   sizeof(AudioChannelDescription) * channels;
+                   sizeof(AudioChannelDescription) * (channels - 1);
     layout = (AudioChannelLayout *)malloc(propertySize);
-    layout->mChannelLayoutTag = kAudioChannelLayoutTag_UseChannelBitmap;
+
+    layout->mChannelLayoutTag = kAudioChannelLayoutTag_Hexagonal;
     layout->mNumberChannelDescriptions = channels;
-    UInt32 bitmap = 0;
     for (int i = 0; i < channels; i++) {
-        bitmap = (bitmap << 1) | 1;
-        
         AudioChannelDescription *channel = &layout->mChannelDescriptions[i];
-        channel->mChannelLabel = kAudioChannelLabel_Unknown;
+
+        // Set the channels up as numbered discrete channels
+        channel->mChannelLabel = (1 << 16) | i;
         
         // This is really jibberish.  I don't know if it's even necessary.
         channel->mChannelFlags = kAudioChannelFlags_SphericalCoordinates;
@@ -367,14 +368,13 @@ void handleInputBuffer(void *aqData,
         channel->mCoordinates[kAudioChannelCoordinates_Distance]  = 1;
         channel->mCoordinates[kAudioChannelCoordinates_Azimuth]   = i * (360. / channels);
     }
-    layout->mChannelBitmap = bitmap;
     
     // Set the layout we just made as the layout for our audio source
     result = AudioQueueSetProperty(recorderState.mQueue, 
                                    kAudioQueueProperty_ChannelLayout, 
                                    layout, propertySize);
     if (result != kAudioHardwareNoError) {
-        NSLog(@"Unable to set the channel layout, may be O.K.");
+        NSLog(@"Unable to set the channel layout, may be O.K. anyway");
     }
     
     // Get the basic description through the API to check everything
