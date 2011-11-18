@@ -349,24 +349,21 @@ void handleInputBuffer(void *aqData,
     // Create a channel layout appropriate for our needs
     // we don't care about stereo or surround sound stuff
     AudioChannelLayout *layout;
+
     // The AudioChannelLayout struct includes 1 channel, so we don't need to add it
     propertySize = sizeof(AudioChannelLayout) + 
                    sizeof(AudioChannelDescription) * (channels - 1);
     layout = (AudioChannelLayout *)malloc(propertySize);
 
-    layout->mChannelLayoutTag = kAudioChannelLayoutTag_Hexagonal;
+    // This is just a discrete list of devices, logical or it with the number of channels
+    layout->mChannelLayoutTag = kAudioChannelLayoutTag_DiscreteInOrder | channels;
+
     layout->mNumberChannelDescriptions = channels;
     for (int i = 0; i < channels; i++) {
         AudioChannelDescription *channel = &layout->mChannelDescriptions[i];
 
         // Set the channels up as numbered discrete channels
         channel->mChannelLabel = (1 << 16) | i;
-        
-        // This is really jibberish.  I don't know if it's even necessary.
-        channel->mChannelFlags = kAudioChannelFlags_SphericalCoordinates;
-        channel->mCoordinates[kAudioChannelCoordinates_Elevation] = 1;
-        channel->mCoordinates[kAudioChannelCoordinates_Distance]  = 1;
-        channel->mCoordinates[kAudioChannelCoordinates_Azimuth]   = i * (360. / channels);
     }
     
     // Set the layout we just made as the layout for our audio source
